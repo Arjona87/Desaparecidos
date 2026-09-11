@@ -461,15 +461,38 @@ function jsonp(url, cbName){
 }
 const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_TAB)}`;
 
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+
 function cell(r, i){
   const c = r.c && r.c[i];
   if (!c || c.v === null || c.v === undefined) return '';
+
+  // Si al pegar, Google Sheets convirtió la celda de texto "MM/AAAA" en una fecha real,
+  // la API ya no devuelve la cadena original sino un valor de fecha. Se normaliza de vuelta
+  // a "MM/AAAA" leyendo el mes y el año del propio valor, que no es ambiguo.
+  // (gviz entrega el mes con base 0: 7 = agosto.)
+  if (typeof c.v === 'string' && c.v.lastIndexOf('Date(', 0) === 0){
+    const d = c.v.match(/Date\((\d+),(\d+)/);
+    if (d) return pad2(parseInt(d[2],10) + 1) + '/' + d[1];
+  }
+  if (c.v instanceof Date){
+    return pad2(c.v.getMonth() + 1) + '/' + c.v.getFullYear();
+  }
   return String(c.v).trim();
 }
-/** 'MM/AAAA' -> {m, y}  |  null si no aplica */
+/** Devuelve {m, y} a partir de 'MM/AAAA', 'DD/MM/AAAA' o 'AAAA-MM-DD'; null si no aplica. */
 function ym(s){
-  if (!s || s.indexOf('/') < 0) return null;
-  const p = s.split('/'), m = parseInt(p[0],10), y = parseInt(p[1],10);
+  if (!s) return null;
+  s = String(s).trim();
+  let g = s.match(/^(\d{1,2})\/(\d{4})$/);            // MM/AAAA  (formato nativo del REPD)
+  if (g) return mk(+g[1], +g[2]);
+  g = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);     // DD/MM/AAAA
+  if (g) return mk(+g[2], +g[3]);
+  g = s.match(/^(\d{4})-(\d{1,2})/);                  // AAAA-MM-DD
+  if (g) return mk(+g[2], +g[1]);
+  return null;
+}
+function mk(m, y){
   if (!m || !y || m < 1 || m > 12) return null;
   return { m, y };
 }
@@ -504,6 +527,21 @@ async function load(){
     }));
 
     if (!ROWS.length) throw new Error('El Sheet respondió pero no devolvió registros.');
+
+    // Autodiagnóstico: si las columnas de fecha no se pudieron interpretar, las gráficas
+    // saldrían vacías sin ninguna señal de error. Se avisa de forma explícita.
+    const sinFecha = ROWS.filter(r => !r.fDes).length;
+    if (sinFecha / ROWS.length > 0.5){
+      document.getElementById('err-box').innerHTML =
+        `<div class="err"><b>Las columnas de fecha no se pudieron interpretar.</b><br>
+         ${fmt(sinFecha)} de ${fmt(ROWS.length)} registros no tienen una fecha de desaparición legible,
+         por lo que las gráficas por año aparecerán vacías.<br><br>
+         Suele ocurrir cuando, al pegar los datos, Google Sheets convierte el texto
+         <code>MM/AAAA</code> en un formato de fecha distinto. Solución: selecciona las columnas
+         <b>E, F, J y O</b> en la pestaña <code>${SHEET_TAB}</code>, aplica
+         <i>Formato → Número → Texto sin formato</i> y vuelve a pegar los datos.</div>`;
+    }
+
     document.getElementById('loader-sub').textContent = 'Calculando indicadores…';
     render();
     document.getElementById('loader').classList.add('hide');
