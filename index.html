@@ -118,6 +118,31 @@ tbody td{padding:9px 13px;border-bottom:1px solid var(--grey-100)}
 tbody tr:hover{background:var(--grey-100)}
 td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
 
+/* ---------- filtro temporal ---------- */
+.filtro{position:sticky;top:0;z-index:60;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);border-top:3px solid var(--cges-gold);padding:16px 20px;margin-bottom:18px}
+.filtro-row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.fgrp{display:flex;flex-direction:column;gap:5px}
+.fgrp label{font-size:.65rem;text-transform:uppercase;letter-spacing:.09em;color:var(--grey-500);font-weight:700}
+.fgrp .pair{display:flex;gap:6px}
+select.fsel,input.fsel{font-family:'Poppins';font-size:.82rem;padding:7px 10px;border:1px solid var(--grey-300);border-radius:8px;background:#fff;color:var(--grey-900);min-width:96px}
+select.fsel:focus,input.fsel:focus{outline:2px solid var(--cges-blue);outline-offset:1px}
+.fbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.fbtn{font-family:'Poppins';font-size:.74rem;font-weight:600;padding:8px 14px;border-radius:99px;border:1.5px solid var(--cges-blue);background:#fff;color:var(--cges-blue);cursor:pointer;transition:.2s}
+.fbtn:hover{background:var(--cges-blue);color:#fff}
+.fbtn.solid{background:var(--cges-blue);color:#fff}
+.fbtn.solid:hover{background:var(--cges-blue-dark);border-color:var(--cges-blue-dark)}
+.fstate{margin-top:12px;font-size:.78rem;color:var(--grey-700);background:var(--grey-100);border-radius:8px;padding:9px 13px;line-height:1.55}
+.fstate b{color:var(--cges-blue)}
+.mini{font-size:.72rem;color:var(--grey-500)}
+.delta-up{color:var(--salmon);font-weight:600}
+.delta-down{color:var(--ok);font-weight:600}
+.delta-flat{color:var(--grey-500);font-weight:600}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{background:var(--cges-blue-dark)}
+thead th .arw{opacity:.55;font-size:.65rem;margin-left:3px}
+.tbl-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+.empty{padding:22px;text-align:center;color:var(--grey-500);font-size:.83rem}
+
 /* ---------- footer ---------- */
 footer{background:var(--cges-blue-dark);color:rgba(255,255,255,.8);padding:34px 24px;font-size:.8rem}
 .foot-in{max-width:1180px;margin:0 auto;display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
@@ -153,6 +178,7 @@ footer a{color:#9FC2FF}
       Cada gráfica incluye un botón que expone su fórmula exacta para poder reproducirla y auditarla en Excel.</p>
     <div class="cut">📅 Información actualizada al <b id="cut-date">—</b> · <span id="rec-count">—</span> registros procesados</div>
     <nav class="jump">
+      <a href="#explorador">Filtro temporal</a>
       <a href="#resumen">Resumen general</a>
       <a href="#desaparecidas">Personas desaparecidas</a>
       <a href="#localizadas">Personas localizadas</a>
@@ -164,6 +190,123 @@ footer a{color:#9FC2FF}
 
 <main>
   <div id="err-box"></div>
+
+  <!-- ===================== EXPLORADOR TEMPORAL ===================== -->
+  <div class="section-head" id="explorador">
+    <div class="section-tag">Explorador</div>
+    <h2>Filtro de temporalidad</h2>
+    <p>Acota el análisis a cualquier ventana de meses y años. El filtro gobierna esta sección y la tabla de detalle
+       municipal del final; las gráficas que replican al sitio oficial conservan sus definiciones fijas y no se ven
+       afectadas, para que la réplica siga siendo auditable contra la fuente.</p>
+  </div>
+
+  <div class="filtro" id="filtro">
+    <div class="filtro-row">
+      <div class="fgrp">
+        <label for="f-modo">Campo de fecha</label>
+        <select class="fsel" id="f-modo" style="min-width:290px">
+          <option value="REP">Fecha de reporte</option>
+          <option value="DES">Fecha de desaparici&oacute;n</option>
+          <option value="AMB">Reporte Y desaparici&oacute;n (criterio oficial)</option>
+          <option value="CUALQ">Reporte O desaparici&oacute;n (cualquiera)</option>
+        </select>
+      </div>
+      <div class="fgrp">
+        <label for="f-m1">Desde</label>
+        <div class="pair"><select class="fsel" id="f-m1"></select><select class="fsel" id="f-y1"></select></div>
+      </div>
+      <div class="fgrp">
+        <label for="f-m2">Hasta</label>
+        <div class="pair"><select class="fsel" id="f-m2"></select><select class="fsel" id="f-y2"></select></div>
+      </div>
+      <div class="fbtns">
+        <button class="fbtn solid" data-preset="todo">Toda la temporalidad</button>
+        <button class="fbtn" data-preset="anio" id="p-anio">A&ntilde;o en curso</button>
+        <button class="fbtn" data-preset="12m">&Uacute;ltimos 12 meses</button>
+      </div>
+    </div>
+    <div class="fstate" id="f-state">&mdash;</div>
+  </div>
+
+  <div class="kpis" id="kpi-exp"></div>
+  <div class="kpis" id="kpi-exp2"></div>
+  <div class="card">
+    <div class="card-body" style="padding-top:18px">
+      <button class="audit-btn" style="margin-top:0" data-audit="a-exp">&#128202; C&oacute;mo auditar estos indicadores en Excel <span class="chev">&#9660;</span></button>
+      <div class="audit-panel" id="a-exp"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Municipios con mayor n&uacute;mero de casos en el periodo</h3>
+      <div class="meta" id="m-top10">&mdash;</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:360px"><canvas id="c-top10"></canvas></div>
+      <div class="tbl-scroll" style="margin-top:16px;max-height:none">
+        <table>
+          <thead><tr><th>#</th><th>Municipio de desaparici&oacute;n</th><th style="text-align:right">Casos</th><th style="text-align:right">Localizadas en el periodo</th><th style="text-align:right">Contin&uacute;an desaparecidas</th><th style="text-align:right">% localizaci&oacute;n</th></tr></thead>
+          <tbody id="tbl-top10"></tbody>
+        </table>
+      </div>
+      <button class="audit-btn" data-audit="a-top10">&#128202; C&oacute;mo auditar esta gr&aacute;fica en Excel <span class="chev">&#9660;</span></button>
+      <div class="audit-panel" id="a-top10"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Municipios con personas desaparecidas y sin ninguna localizaci&oacute;n en el periodo</h3>
+      <div class="meta" id="m-sinloc">&mdash;</div>
+    </div>
+    <div class="card-body">
+      <div class="tbl-scroll" style="max-height:340px">
+        <table>
+          <thead><tr><th>Municipio de desaparici&oacute;n</th><th style="text-align:right">Contin&uacute;an desaparecidas</th><th style="text-align:right">Casos en el periodo</th></tr></thead>
+          <tbody id="tbl-sinloc"></tbody>
+        </table>
+      </div>
+      <button class="audit-btn" data-audit="a-sinloc">&#128202; C&oacute;mo auditar esta tabla en Excel <span class="chev">&#9660;</span></button>
+      <div class="audit-panel" id="a-sinloc"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Variaci&oacute;n mensual contra el mismo mes del a&ntilde;o anterior</h3>
+      <div class="meta" id="m-mensual">&mdash;</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:340px"><canvas id="c-mensual"></canvas></div>
+      <div class="tbl-scroll" style="margin-top:16px;max-height:360px">
+        <table>
+          <thead><tr><th>Mes</th><th style="text-align:right">Periodo</th><th style="text-align:right">A&ntilde;o anterior</th><th style="text-align:right">Diferencia</th><th style="text-align:right">Variaci&oacute;n</th></tr></thead>
+          <tbody id="tbl-mensual"></tbody>
+        </table>
+      </div>
+      <button class="audit-btn" data-audit="a-mensual">&#128202; C&oacute;mo auditar esta gr&aacute;fica en Excel <span class="chev">&#9660;</span></button>
+      <div class="audit-panel" id="a-mensual"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Variaci&oacute;n del periodo acumulado contra el mismo periodo del a&ntilde;o anterior</h3>
+      <div class="meta" id="m-periodo">&mdash;</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:330px"><canvas id="c-periodo"></canvas></div>
+      <div class="tbl-scroll" style="margin-top:16px;max-height:none">
+        <table>
+          <thead><tr><th>A&ntilde;o</th><th style="text-align:right">Periodo acumulado</th><th style="text-align:right">Diferencia</th><th style="text-align:right">Variaci&oacute;n</th></tr></thead>
+          <tbody id="tbl-periodo"></tbody>
+        </table>
+      </div>
+      <button class="audit-btn" data-audit="a-periodo">&#128202; C&oacute;mo auditar esta gr&aacute;fica en Excel <span class="chev">&#9660;</span></button>
+      <div class="audit-panel" id="a-periodo"></div>
+    </div>
+  </div>
 
   <!-- ===================== RESUMEN GENERAL ===================== -->
   <div class="section-head" id="resumen">
@@ -367,13 +510,24 @@ footer a{color:#9FC2FF}
 
   <div class="card">
     <div class="card-head">
-      <h3>Detalle municipal completo</h3>
-      <div class="meta">Personas desaparecidas y localizadas por municipio de desaparición</div>
+      <h3>Detalle municipal completo · % de localización por municipio</h3>
+      <div class="meta">Responde al filtro de temporalidad. Haz clic en cualquier encabezado para reordenar la tabla.</div>
     </div>
     <div class="card-body">
+      <div class="tbl-tools">
+        <input class="fsel" id="q-muni" type="search" placeholder="Buscar municipio…" style="min-width:230px" aria-label="Buscar municipio">
+        <span class="mini" id="m-tblmuni">—</span>
+      </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>Municipio de desaparición</th><th style="text-align:right">Desaparecidas</th><th style="text-align:right">Localizadas</th><th style="text-align:right">Total registros</th><th style="text-align:right">% localización</th></tr></thead>
+          <thead><tr>
+            <th class="sortable" data-sort="muni">Municipio de desaparición<span class="arw"></span></th>
+            <th class="sortable" data-sort="n"    style="text-align:right">Casos en el periodo<span class="arw"></span></th>
+            <th class="sortable" data-sort="des"  style="text-align:right">Continúan desaparecidas<span class="arw"></span></th>
+            <th class="sortable" data-sort="locV" style="text-align:right">Localizadas en el periodo<span class="arw"></span></th>
+            <th class="sortable" data-sort="locT" style="text-align:right">Localizadas (cualquier fecha)<span class="arw"></span></th>
+            <th class="sortable" data-sort="pct"  style="text-align:right">% localización<span class="arw"></span></th>
+          </tr></thead>
           <tbody id="tbl-muni"></tbody>
         </table>
       </div>
@@ -397,16 +551,26 @@ footer a{color:#9FC2FF}
       </p>
       <div class="flag">
         <b>Sobre el estatus «CIERRE».</b> El glosario oficial del REPD define <i>Cierre</i> como el registro cerrado por no
-        competencia territorial, no competencia de delito, acumulación (duplicidad) o búsqueda de familiares. Estos registros
-        <b>no son casos vigentes ni casos resueltos</b>, por lo que se excluyen de los cálculos de incidencia y de porcentaje de
-        localización, tal como lo hacen los boletines oficiales. En el tablero se reportan por separado para no ocultarlos.
+        competencia territorial, no competencia de delito, acumulación (duplicidad) o búsqueda de familiares. Aunque no son
+        casos vigentes, <b>sí forman parte de las cohortes</b> de las gráficas de incidencia y de porcentaje de localización:
+        así los contabiliza el sitio oficial, y así se replican aquí. La verificación es exacta —la ventana enero–agosto de 2026
+        da 66.55% incluyéndolos y 66.98% excluyéndolos, y el sitio publica 66.55%— y se confirma por una segunda vía
+        independiente en la nota al pie de las desapariciones previas a 2019. En el apartado de cobertura se reportan por
+        separado para no ocultarlos.
       </div>
       <div class="flag" style="margin-top:10px">
-        <b>Divergencia documentada.</b> Con la definición aquí aplicada, el porcentaje de localización enero–agosto 2026
-        reproduce la cifra difundida por el Gobierno del Estado. Para 2019–2025 el resultado difiere de lo publicado en
-        un rango de <b>0.3 a 0.9 puntos porcentuales</b>. La causa es el tratamiento preciso de los registros con estatus
-        «CIERRE» en el denominador, que no puede determinarse con certeza a partir de una serie publicada con un solo decimal.
-        Se reporta la diferencia en lugar de forzar el ajuste.
+        <b>Dos cifras oficiales para el mismo indicador.</b> Los boletines de prensa y el sitio de la versión pública publican
+        números distintos: para enero–julio de 2026, el boletín reportó 1,473 desapariciones y 66.8% de localización, mientras
+        que el sitio reportó 1,479 y 66.49%. Conviven dos metodologías oficiales. Este tablero se alinea de manera consistente
+        al <b>sitio</b>, por ser la fuente con versión pública descargable en la que cada caso tiene folio estatal de búsqueda
+        y, por tanto, es trazable y reproducible registro por registro.
+      </div>
+      <div class="flag" style="margin-top:10px">
+        <b>Alcance del filtro de temporalidad.</b> El filtro del inicio de la página gobierna el explorador temporal y la tabla
+        de detalle municipal. Las gráficas que replican al sitio oficial mantienen sus definiciones fijas —ventana enero–agosto,
+        cohortes anuales, localizaciones desde diciembre de 2018— porque son el objeto mismo de la réplica: si el filtro las
+        moviera, dejarían de ser comparables contra la fuente. Los indicadores del explorador responden a la ventana activa y
+        llevan su propia documentación de auditoría.
       </div>
       <div id="cobertura" style="margin-top:16px"></div>
     </div>
@@ -619,7 +783,12 @@ function barOpts(stacked, horizontal, pct){
 }
 
 /** Chart.js 4 requiere el elemento canvas, no su id. */
-function mkChart(id, cfg){ return new Chart(document.getElementById(id), cfg); }
+const CHARTS = {};
+function mkChart(id, cfg){
+  if (CHARTS[id]) CHARTS[id].destroy();      // el filtro redibuja: evita instancias fantasma
+  CHARTS[id] = new Chart(document.getElementById(id), cfg);
+  return CHARTS[id];
+}
 
 /* =======================================================================
    BOTONES DE AUDITORÍA
@@ -648,11 +817,364 @@ document.addEventListener('click', e => {
 });
 
 /* =======================================================================
+   FILTRO DE TEMPORALIDAD
+   Gobierna únicamente el «Explorador temporal» y la tabla de detalle
+   municipal. Las gráficas que replican al sitio oficial conservan sus
+   definiciones fijas para que la réplica siga siendo auditable.
+   ======================================================================= */
+const MESES_NOM = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_AB  = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+/* Estado del filtro. a y b son índices de mes absolutos (año*12 + mes-1). */
+const FILTRO = { modo:'REP', a:0, b:0 };
+let LIM = { a:0, b:0 };
+
+const ix     = f => f ? f.y * 12 + (f.m - 1) : null;
+const deIx   = n => ({ y: Math.floor(n / 12), m: (n % 12) + 1 });
+const etiqIx = n => { const d = deIx(n); return MESES_AB[d.m] + ' ' + d.y; };
+const largo  = n => { const d = deIx(n); return MESES_NOM[d.m].toLowerCase() + ' de ' + d.y; };
+const enRango = f => { if (!f) return false; const n = ix(f); return n >= FILTRO.a && n <= FILTRO.b; };
+
+const MODO_TXT = {
+  REP:   'fecha de reporte',
+  DES:   'fecha de desaparición',
+  AMB:   'desaparición y reporte, ambos dentro del periodo',
+  CUALQ: 'fecha de reporte o de desaparición'
+};
+
+/** Conjunto base: registros que caen en la ventana según el campo elegido. */
+function baseSet(){
+  switch (FILTRO.modo){
+    case 'DES':   return ROWS.filter(r => enRango(r.fDes));
+    case 'AMB':   return ROWS.filter(r => enRango(r.fDes) && enRango(r.fRep));
+    case 'CUALQ': return ROWS.filter(r => enRango(r.fDes) || enRango(r.fRep));
+    default:      return ROWS.filter(r => enRango(r.fRep));
+  }
+}
+/** Fecha de referencia del modo activo, usada por las series mensuales. */
+const fechaRef  = r => (FILTRO.modo === 'DES' || FILTRO.modo === 'AMB') ? r.fDes : r.fRep;
+/** En modo «ambas», al comparar meses sueltos se exige el reporte en el mismo año. */
+const cumpleModo = r => FILTRO.modo !== 'AMB' ? true : !!(r.fDes && r.fRep && r.fDes.y === r.fRep.y);
+
+function initFiltro(){
+  let lo = Infinity, hi = -Infinity;
+  ROWS.forEach(r => [r.fRep, r.fDes].forEach(f => {
+    if (f){ const n = ix(f); if (n < lo) lo = n; if (n > hi) hi = n; }
+  }));
+  if (!isFinite(lo)){ lo = hi = new Date().getFullYear() * 12; }
+  LIM = { a:lo, b:hi };
+  FILTRO.a = lo; FILTRO.b = hi;              // por defecto: TODA la temporalidad
+
+  const yIni = deIx(lo).y, yFin = deIx(hi).y;
+  const optY = [];
+  for (let y = yFin; y >= yIni; y--) optY.push('<option value="' + y + '">' + y + '</option>');
+  const optM = MESES_NOM.slice(1).map((m,i) => '<option value="' + (i+1) + '">' + m + '</option>').join('');
+  ['f-y1','f-y2'].forEach(id => document.getElementById(id).innerHTML = optY.join(''));
+  ['f-m1','f-m2'].forEach(id => document.getElementById(id).innerHTML = optM);
+  pintarSelects();
+
+  document.getElementById('p-anio').textContent = yFin + ': enero a ' + MESES_NOM[deIx(hi).m].toLowerCase();
+  ['f-modo','f-y1','f-m1','f-y2','f-m2'].forEach(id =>
+    document.getElementById(id).addEventListener('change', leerSelects));
+  document.querySelectorAll('[data-preset]').forEach(b =>
+    b.addEventListener('click', () => aplicarPreset(b.dataset.preset)));
+  document.getElementById('q-muni').addEventListener('input', renderTablaMuni);
+  document.querySelectorAll('th.sortable').forEach(th =>
+    th.addEventListener('click', () => ordenarMuni(th.dataset.sort)));
+}
+function pintarSelects(){
+  const A = deIx(FILTRO.a), B = deIx(FILTRO.b);
+  document.getElementById('f-y1').value = A.y; document.getElementById('f-m1').value = A.m;
+  document.getElementById('f-y2').value = B.y; document.getElementById('f-m2').value = B.m;
+  document.getElementById('f-modo').value = FILTRO.modo;
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('solid'));
+  const esTodo = FILTRO.a === LIM.a && FILTRO.b === LIM.b;
+  if (esTodo) document.querySelector('[data-preset="todo"]').classList.add('solid');
+}
+function leerSelects(){
+  FILTRO.modo = document.getElementById('f-modo').value;
+  let a = (+document.getElementById('f-y1').value) * 12 + (+document.getElementById('f-m1').value - 1);
+  let b = (+document.getElementById('f-y2').value) * 12 + (+document.getElementById('f-m2').value - 1);
+  if (a > b){ const t = a; a = b; b = t; }     // si el rango se invierte, se corrige solo
+  FILTRO.a = a; FILTRO.b = b;
+  pintarSelects(); renderExplorador(); renderTablaMuni();
+}
+function aplicarPreset(p){
+  if (p === 'todo'){ FILTRO.a = LIM.a; FILTRO.b = LIM.b; }
+  if (p === 'anio'){ FILTRO.a = deIx(LIM.b).y * 12; FILTRO.b = LIM.b; }
+  if (p === '12m'){  FILTRO.a = Math.max(LIM.a, LIM.b - 11); FILTRO.b = LIM.b; }
+  pintarSelects(); renderExplorador(); renderTablaMuni();
+}
+
+/** Variación porcentual con signo y color. */
+function delta(cur, prev){
+  if (!prev) return '<span class="delta-flat">n/d</span>';
+  const d = (cur - prev) / prev * 100;
+  const cls = d > 0 ? 'delta-up' : (d < 0 ? 'delta-down' : 'delta-flat');
+  const sig = d > 0 ? '▲ +' : (d < 0 ? '▼ ' : '');
+  return '<span class="' + cls + '">' + sig + d.toFixed(1) + '%</span>';
+}
+/** Title case respetando preposiciones: 'TLAJOMULCO DE ZUÑIGA' → 'Tlajomulco de Zuñiga'. */
+const MINUS = ['DE','DEL','LA','LAS','LOS','EL','Y'];
+const capMun = m => String(m).split(' ').map((w,i) =>
+  (i && MINUS.includes(w)) ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+
+/* =======================================================================
+   EXPLORADOR TEMPORAL — KPIs, territorio y variaciones de la ventana activa
+   ======================================================================= */
+function renderExplorador(){
+  const S = baseSet();
+  const nMeses = FILTRO.b - FILTRO.a + 1;
+  let nDias = 0;
+  for (let n = FILTRO.a; n <= FILTRO.b; n++){ const d = deIx(n); nDias += new Date(d.y, d.m, 0).getDate(); }
+
+  const reportes  = ROWS.filter(r => enRango(r.fRep)).length;
+  const ocurridas = ROWS.filter(r => enRango(r.fDes)).length;
+  const sigueDes  = S.filter(esDesaparecida).length;
+  const locVent   = S.filter(r => enRango(r.fLoc)).length;
+  const locTot    = S.filter(esLocalizada).length;
+  const cierres   = S.filter(esCierre).length;
+  const conCI     = S.filter(r => r.carpeta === 'SÍ' || r.carpeta === 'SI').length;
+  const sinCI     = S.filter(r => r.carpeta === 'NO').length;
+  const pctLoc    = S.length ? locVent / S.length * 100 : 0;
+  const rango     = etiqIx(FILTRO.a) + ' – ' + etiqIx(FILTRO.b);
+  const esTodo    = FILTRO.a === LIM.a && FILTRO.b === LIM.b;
+
+  document.getElementById('f-state').innerHTML =
+    'Periodo activo: <b>' + largo(FILTRO.a) + '</b> a <b>' + largo(FILTRO.b) + '</b> · ' +
+    nMeses + (nMeses === 1 ? ' mes' : ' meses') + ' · Campo de fecha: <b>' + MODO_TXT[FILTRO.modo] + '</b> · ' +
+    'Registros en el periodo: <b>' + fmt(S.length) + '</b>' +
+    (esTodo ? ' <span class="mini">— sin acotar: se muestra toda la temporalidad disponible en el registro.</span>' : '');
+
+  document.getElementById('kpi-exp').innerHTML =
+    kpi('Reportes recibidos en el periodo', fmt(reportes),
+        'Promedio: ' + (reportes/nMeses).toFixed(1) + ' al mes · ' + (reportes/nDias).toFixed(2) + ' al día') +
+    kpi('Desapariciones ocurridas en el periodo', fmt(ocurridas),
+        'Promedio: ' + (ocurridas/nMeses).toFixed(1) + ' al mes · ' + (ocurridas/nDias).toFixed(2) + ' al día') +
+    kpi('Registros de la base activa', fmt(S.length), 'Criterio: ' + MODO_TXT[FILTRO.modo]) +
+    kpi('Porcentaje de localización del periodo', pctLoc.toFixed(2) + '%',
+        fmt(locVent) + ' de ' + fmt(S.length) + ' localizadas dentro del propio periodo');
+
+  document.getElementById('kpi-exp2').innerHTML =
+    kpi('Continúan desaparecidas', fmt(sigueDes), pctTxt(sigueDes, S.length) + ' de la base activa', true) +
+    kpi('Localizadas a la fecha de corte', fmt(locTot), pctTxt(locTot, S.length) + ' de la base activa', true) +
+    kpi('Con carpeta de investigación', fmt(conCI), pctTxt(conCI, S.length) + ' de la base activa', true) +
+    kpi('Sin carpeta de investigación', fmt(sinCI),
+        pctTxt(sinCI, S.length) + ' de la base activa · ' + fmt(cierres) + ' con estatus de cierre', true);
+
+  auditPanel('a-exp',{
+    cols:['FECHA REPORTE','FECHA DESAPARICION','FECHA DE LOCALIZACION','ESTATUS','CARPETA DE INVESTIGACIÓN'],
+    filtro:'Ventana activa <code>' + rango + '</code> aplicada al campo <b>' + MODO_TXT[FILTRO.modo] + '</b>.',
+    pasos:[
+      'Crea columnas auxiliares de mes y año para <b>FECHA REPORTE</b>, <b>FECHA DESAPARICION</b> y <b>FECHA DE LOCALIZACION</b>: <code>=VALOR(IZQUIERDA(E2,2))</code> y <code>=VALOR(DERECHA(E2,4))</code>.',
+      'Construye un índice de mes continuo en cada una para poder comparar rangos que cruzan de año: <code>= Año*12 + Mes - 1</code>. La ventana activa va del índice <b>' + FILTRO.a + '</b> (' + largo(FILTRO.a) + ') al <b>' + FILTRO.b + '</b> (' + largo(FILTRO.b) + ').',
+      '<b>Base activa:</b> conserva las filas cuyo índice del campo elegido cae dentro de la ventana. En modo «reporte y desaparición» deben cumplirse las dos condiciones a la vez; es el criterio que usa el sitio oficial.',
+      '<b>Localizadas en el periodo:</b> de esa base, las que además tienen el índice de <b>FECHA DE LOCALIZACION</b> dentro de la misma ventana. No basta con que el estatus sea «PERSONA LOCALIZADA»: una persona reportada en enero y localizada dos años después no cuenta como localización del periodo.',
+      '<b>Promedios:</b> el mensual divide entre ' + nMeses + ' meses; el diario entre ' + fmt(nDias) + ' días naturales, que son los que suman los meses de la ventana.',
+      'La carpeta de investigación se cuenta sobre la base activa completa. Cuidado con el acento: el valor es <code>Sí</code>.'
+    ],
+    formula:'\' Base activa (modo «fecha de reporte»)\n=CONTAR.SI.CONJUNTO(IndiceRep,"&gt;=' + FILTRO.a + '", IndiceRep,"&lt;=' + FILTRO.b + '")\n\n\' Localizadas dentro del periodo\n=CONTAR.SI.CONJUNTO(IndiceRep,"&gt;=' + FILTRO.a + '", IndiceRep,"&lt;=' + FILTRO.b + '",\n                      IndiceLoc,"&gt;=' + FILTRO.a + '", IndiceLoc,"&lt;=' + FILTRO.b + '")\n\n\' Porcentaje de localización del periodo\n= Localizadas / Base * 100',
+    check:'Con la ventana activa, la base es <b>' + fmt(S.length) + '</b> y las localizadas dentro del periodo <b>' + fmt(locVent) + '</b> → <b>' + pctLoc.toFixed(2) + '%</b>. Las tarjetas «continúan desaparecidas», «localizadas a la fecha de corte» y los cierres deben sumar exactamente la base: ' + fmt(sigueDes) + ' + ' + fmt(locTot) + ' + ' + fmt(cierres) + ' = <b>' + fmt(sigueDes + locTot + cierres) + '</b>.',
+    flag:'«Localizadas dentro del periodo» y «localizadas a la fecha de corte» miden cosas distintas y casi nunca coinciden: la primera exige que la localización haya ocurrido dentro de la ventana; la segunda sólo mira el estatus vigente, sin importar cuándo se confirmó. Para comparar periodos entre sí usa siempre la primera.'
+  });
+
+  /* ---------- Territorio de la ventana ---------- */
+  const mm = {};
+  S.forEach(r => {
+    const k = r.munDes || 'SE IGNORA';
+    if (!mm[k]) mm[k] = { muni:k, n:0, des:0, locV:0, locT:0 };
+    mm[k].n++;
+    if (esDesaparecida(r)) mm[k].des++;
+    if (enRango(r.fLoc))   mm[k].locV++;
+    if (esLocalizada(r))   mm[k].locT++;
+  });
+  const arr = Object.values(mm).sort((a,b) => b.n - a.n);
+  const top10 = arr.slice(0,10);
+
+  document.getElementById('m-top10').textContent =
+    'Diez municipios con más casos · ' + rango + ' · ' + MODO_TXT[FILTRO.modo];
+  mkChart('c-top10',{
+    type:'bar',
+    data:{ labels: top10.map(m => capMun(m.muni)),
+      datasets:[{ label:'Casos en el periodo', data: top10.map(m => m.n),
+        backgroundColor:C.blue, borderRadius:4 }] },
+    options: barOpts(false,true,false)
+  });
+  document.getElementById('tbl-top10').innerHTML = top10.length
+    ? top10.map((m,i) => '<tr><td class="num" style="text-align:left">' + (i+1) + '</td><td>' + capMun(m.muni) + '</td>' +
+        '<td class="num">' + fmt(m.n) + '</td><td class="num">' + fmt(m.locV) + '</td>' +
+        '<td class="num">' + fmt(m.des) + '</td><td class="num">' + (m.n ? (m.locV/m.n*100).toFixed(1) : '0.0') + '%</td></tr>').join('')
+    : '<tr><td colspan="6" class="empty">Sin registros en el periodo seleccionado.</td></tr>';
+  auditPanel('a-top10',{
+    cols:['MUNICIPIO DESAPARICION','FECHA REPORTE','FECHA DESAPARICION','FECHA DE LOCALIZACION','ESTATUS'],
+    filtro:'Base activa de la ventana <code>' + rango + '</code>, agrupada por <code>MUNICIPIO DESAPARICION</code>.',
+    pasos:[
+      'Parte de la base activa del filtro, no de la base completa.',
+      'Tabla dinámica con <b>MUNICIPIO DESAPARICION</b> en filas y el conteo de folios en valores; ordena de mayor a menor y conserva los diez primeros.',
+      'Para la columna de localizadas, agrega un filtro por índice de <b>FECHA DE LOCALIZACION</b> dentro de la misma ventana.',
+      'El municipio es el del <b>lugar de la desaparición</b>. Los registros con <code>SE IGNORA</code> se conservan como categoría propia: no se eliminan ni se reparten entre los demás.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",\n                      IndiceRep,"&gt;=' + FILTRO.a + '", IndiceRep,"&lt;=' + FILTRO.b + '")',
+    check: top10.length ? 'El primer municipio de la tabla es <b>' + capMun(top10[0].muni) + '</b> con <b>' + fmt(top10[0].n) + '</b> casos. La suma de los diez es <b>' + fmt(top10.reduce((a,m) => a + m.n, 0)) + '</b> de ' + fmt(S.length) + ' registros del periodo.' : 'Sin registros en el periodo.',
+    flag:'El porcentaje de localización municipal de esta tabla se calcula sobre los casos del propio periodo. En municipios con pocos casos, un solo registro mueve el porcentaje varios puntos: lee siempre el absoluto junto al porcentaje.'
+  });
+
+  /* ---------- Municipios sin localizaciones ---------- */
+  const sinLoc = arr.filter(m => m.des > 0 && m.locV === 0).sort((a,b) => b.des - a.des || b.n - a.n);
+  const sinLocDes = sinLoc.reduce((a,m) => a + m.des, 0);
+  document.getElementById('m-sinloc').textContent =
+    sinLoc.length + ' municipios · ' + fmt(sinLocDes) + ' personas que continúan desaparecidas · ' + rango;
+  document.getElementById('tbl-sinloc').innerHTML = sinLoc.length
+    ? sinLoc.map(m => '<tr><td>' + capMun(m.muni) + '</td><td class="num">' + fmt(m.des) + '</td><td class="num">' + fmt(m.n) + '</td></tr>').join('')
+    : '<tr><td colspan="3" class="empty">En el periodo seleccionado no hay municipios con desapariciones y cero localizaciones.</td></tr>';
+  auditPanel('a-sinloc',{
+    cols:['MUNICIPIO DESAPARICION','ESTATUS','FECHA DE LOCALIZACION'],
+    filtro:'Municipios de la base activa con al menos una persona en estatus <code>PERSONA DESAPARECIDA</code> y <b>cero</b> localizaciones confirmadas dentro de la ventana.',
+    pasos:[
+      'Sobre la base activa, arma una tabla dinámica con <b>MUNICIPIO DESAPARICION</b> en filas y <b>ESTATUS</b> en columnas.',
+      'Agrega una columna que cuente las filas con índice de <b>FECHA DE LOCALIZACION</b> dentro de la ventana.',
+      'Conserva los municipios donde esa columna sea <b>0</b> y la de personas desaparecidas sea mayor que cero.',
+      'Ordena de mayor a menor por personas que continúan desaparecidas.'
+    ],
+    formula:'=SI(Y(CONTAR.SI.CONJUNTO(MunicipioDesap,A2,Estatus,"PERSONA DESAPARECIDA")&gt;0,\n       CONTAR.SI.CONJUNTO(MunicipioDesap,A2,IndiceLoc,"&gt;=' + FILTRO.a + '",\n                            IndiceLoc,"&lt;=' + FILTRO.b + '")=0),"Sin localizaciones","")',
+    flag:'Cero localizaciones en una ventana corta casi siempre refleja un volumen muy bajo de casos, no necesariamente una falla operativa. La lectura es distinta cuando el municipio acumula decenas de casos sin una sola localización: ésos son los que ameritan revisión.'
+  });
+
+  /* ---------- Variación mensual ---------- */
+  const cuentaMes = {};
+  ROWS.forEach(r => {
+    if (!cumpleModo(r)) return;
+    const f = fechaRef(r); if (!f) return;
+    const n = ix(f); cuentaMes[n] = (cuentaMes[n] || 0) + 1;
+  });
+  const desdeCh = Math.max(FILTRO.a, FILTRO.b - 23);
+  const meses = []; for (let n = desdeCh; n <= FILTRO.b; n++) meses.push(n);
+  const curS = meses.map(n => cuentaMes[n] || 0);
+  const preS = meses.map(n => cuentaMes[n-12] || 0);
+  const totCur = curS.reduce((a,b) => a+b, 0), totPre = preS.reduce((a,b) => a+b, 0);
+
+  document.getElementById('m-mensual').innerHTML =
+    'Campo de fecha: ' + MODO_TXT[FILTRO.modo] + ' · ' + meses.length + ' meses mostrados' +
+    (meses.length < (FILTRO.b - FILTRO.a + 1) ? ' (últimos 24 del periodo)' : '');
+  mkChart('c-mensual',{
+    type:'bar',
+    data:{ labels: meses.map(etiqIx), datasets:[
+      { label:'Periodo seleccionado', data:curS, backgroundColor:C.blue,  borderRadius:4 },
+      { label:'Mismo mes del año anterior', data:preS, backgroundColor:C.tealLight, borderRadius:4 }] },
+    options: barOpts(false,false,false)
+  });
+  document.getElementById('tbl-mensual').innerHTML = meses.map((n,i) => {
+    const d = curS[i] - preS[i];
+    return '<tr><td>' + MESES_NOM[deIx(n).m] + ' ' + deIx(n).y + '</td>' +
+      '<td class="num">' + fmt(curS[i]) + '</td><td class="num">' + fmt(preS[i]) + '</td>' +
+      '<td class="num">' + (d > 0 ? '+' : '') + fmt(d) + '</td>' +
+      '<td class="num">' + delta(curS[i], preS[i]) + '</td></tr>';
+  }).join('');
+  auditPanel('a-mensual',{
+    cols:['FECHA REPORTE','FECHA DESAPARICION'],
+    filtro:'Conteo mensual por <b>' + (FILTRO.modo === 'DES' || FILTRO.modo === 'AMB' ? 'FECHA DESAPARICION' : 'FECHA REPORTE') + '</b>' +
+           (FILTRO.modo === 'AMB' ? ', exigiendo además que el año de <code>FECHA REPORTE</code> sea igual al de la desaparición.' : '.'),
+    pasos:[
+      'Con las columnas auxiliares de mes y año, cuenta las filas de cada mes del periodo.',
+      'Repite el conteo doce meses atrás: mismo mes, año anterior. En el índice continuo es simplemente <code>índice − 12</code>.',
+      'La diferencia es la resta directa; la variación es <code>(actual − anterior) / anterior × 100</code>.',
+      'Cuando el mes del año anterior no tiene registros, la variación se reporta como <b>n/d</b> en lugar de forzar una división entre cero.',
+      'Los meses más recientes son un piso, no una cifra cerrada: las capturas tardías siguen aumentando los meses ya publicados.'
+    ],
+    formula:'\' Mes actual\n=CONTAR.SI.CONJUNTO(AnioRep,2026, MesRep,8)\n\n\' Mismo mes del año anterior\n=CONTAR.SI.CONJUNTO(AnioRep,2025, MesRep,8)\n\n\' Variación\n= (Actual - Anterior) / Anterior * 100',
+    check:'Los ' + meses.length + ' meses mostrados suman <b>' + fmt(totCur) + '</b> registros, contra <b>' + fmt(totPre) + '</b> en los mismos meses del año previo (' + (totPre ? ((totCur-totPre)/totPre*100).toFixed(1) + '%' : 'n/d') + ').',
+    flag:'Un repunte en un solo mes no marca un cambio de tendencia. Contrástalo siempre con el acumulado del periodo, que es la gráfica siguiente.'
+  });
+
+  /* ---------- Variación del periodo acumulado ---------- */
+  const mH = deIx(FILTRO.b).m, yH = deIx(FILTRO.b).y;
+  const anios = []; for (let y = Math.max(deIx(LIM.a).y, yH - 7); y <= yH; y++) anios.push(y);
+  const perS = anios.map(y => {
+    let k = 0;
+    ROWS.forEach(r => { if (!cumpleModo(r)) return; const f = fechaRef(r); if (f && f.y === y && f.m <= mH) k++; });
+    return k;
+  });
+  document.getElementById('m-periodo').textContent =
+    'Acumulado de enero a ' + MESES_NOM[mH].toLowerCase() + ' de cada año · ' + MODO_TXT[FILTRO.modo];
+  mkChart('c-periodo',{
+    type:'bar',
+    data:{ labels:anios, datasets:[{ label:'Enero a ' + MESES_NOM[mH].toLowerCase(), data:perS,
+      backgroundColor: anios.map((y,i) => i === anios.length - 1 ? C.blue : C.teal), borderRadius:4, maxBarThickness:52 }] },
+    options: barOpts(false,false,false)
+  });
+  document.getElementById('tbl-periodo').innerHTML = anios.map((y,i) => {
+    const prev = i ? perS[i-1] : null, d = prev === null ? null : perS[i] - prev;
+    return '<tr><td>' + y + '</td><td class="num">' + fmt(perS[i]) + '</td>' +
+      '<td class="num">' + (d === null ? '—' : (d > 0 ? '+' : '') + fmt(d)) + '</td>' +
+      '<td class="num">' + (prev === null ? '—' : delta(perS[i], prev)) + '</td></tr>';
+  }).join('');
+  const ultDelta = perS.length > 1 && perS[perS.length-2]
+    ? ((perS[perS.length-1] - perS[perS.length-2]) / perS[perS.length-2] * 100).toFixed(1) + '%' : 'n/d';
+  auditPanel('a-periodo',{
+    cols:['FECHA REPORTE','FECHA DESAPARICION'],
+    filtro:'Para cada año: mes del campo de referencia <code>≤ ' + mH + '</code> (enero a ' + MESES_NOM[mH].toLowerCase() + ').',
+    pasos:[
+      'El mes de corte lo define el «hasta» del filtro: hoy es ' + MESES_NOM[mH].toLowerCase() + ', por lo que todos los años se cortan en ese mismo mes.',
+      'Cuenta, año por año, las filas cuyo mes de referencia sea menor o igual a ese corte.',
+      'Compara cada año contra el inmediato anterior. Es la única comparación limpia entre años: misma cantidad de meses transcurridos en todos.',
+      'No compares un acumulado de ocho meses contra un año completo: la diferencia sería de calendario, no de fenómeno.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(AnioRep,2026, MesRep,"&lt;=' + mH + '")\n=CONTAR.SI.CONJUNTO(AnioRep,2025, MesRep,"&lt;=' + mH + '")\n\n\' Variación\n= (2026 - 2025) / 2025 * 100',
+    check:'Enero a ' + MESES_NOM[mH].toLowerCase() + ' de ' + yH + ': <b>' + fmt(perS[perS.length-1]) + '</b> registros, una variación de <b>' + ultDelta + '</b> respecto del mismo periodo de ' + (yH-1) + '.',
+    flag:'El año en curso siempre está sujeto a revisión al alza por reportes tardíos: alrededor del 14% de los reportes de un año corresponden a desapariciones ocurridas en años previos.'
+  });
+}
+
+/* =======================================================================
+   TABLA DE DETALLE MUNICIPAL — responde al filtro y es ordenable
+   ======================================================================= */
+let MUNI_SORT = { col:'n', dir:-1 };
+function ordenarMuni(col){
+  MUNI_SORT = (MUNI_SORT.col === col) ? { col, dir: -MUNI_SORT.dir } : { col, dir: col === 'muni' ? 1 : -1 };
+  renderTablaMuni();
+}
+function renderTablaMuni(){
+  const S = baseSet();
+  const q = (document.getElementById('q-muni').value || '').trim().toUpperCase();
+  const mm = {};
+  S.forEach(r => {
+    const k = r.munDes || 'SE IGNORA';
+    if (!mm[k]) mm[k] = { muni:k, n:0, des:0, locV:0, locT:0 };
+    mm[k].n++;
+    if (esDesaparecida(r)) mm[k].des++;
+    if (enRango(r.fLoc))   mm[k].locV++;
+    if (esLocalizada(r))   mm[k].locT++;
+  });
+  let arr = Object.values(mm).map(m => Object.assign(m, { pct: m.n ? m.locV / m.n * 100 : 0 }));
+  if (q) arr = arr.filter(m => m.muni.indexOf(q) !== -1);
+  arr.sort((a,b) => MUNI_SORT.col === 'muni'
+    ? a.muni.localeCompare(b.muni, 'es') * MUNI_SORT.dir
+    : (a[MUNI_SORT.col] - b[MUNI_SORT.col]) * MUNI_SORT.dir);
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    const a = th.querySelector('.arw');
+    a.textContent = th.dataset.sort === MUNI_SORT.col ? (MUNI_SORT.dir === 1 ? '▲' : '▼') : '';
+  });
+  document.getElementById('m-tblmuni').innerHTML =
+    fmt(arr.length) + ' municipios · ' + etiqIx(FILTRO.a) + ' – ' + etiqIx(FILTRO.b) +
+    ' · ' + fmt(arr.reduce((a,m) => a + m.n, 0)) + ' registros' + (q ? ' · filtro de texto activo' : '');
+  document.getElementById('tbl-muni').innerHTML = arr.length
+    ? arr.map(m => '<tr><td>' + capMun(m.muni) + '</td>' +
+        '<td class="num">' + fmt(m.n) + '</td><td class="num">' + fmt(m.des) + '</td>' +
+        '<td class="num">' + fmt(m.locV) + '</td><td class="num">' + fmt(m.locT) + '</td>' +
+        '<td class="num">' + m.pct.toFixed(1) + '%</td></tr>').join('')
+    : '<tr><td colspan="6" class="empty">Ningún municipio coincide con el periodo y el texto buscados.</td></tr>';
+}
+
+/* =======================================================================
    RENDER
    ======================================================================= */
 function render(){
   document.getElementById('cut-date').textContent = CUT_TEXT || '—';
   document.getElementById('rec-count').textContent = fmt(ROWS.length);
+
+  initFiltro();
+  renderExplorador();
 
   const DES = ROWS.filter(esDesaparecida);
   const LOC = ROWS.filter(r => esLocalizada(r) && locDesdeDic18(r));
@@ -755,8 +1277,9 @@ function render(){
   });
 
   /* ---------- Incidencia enero–agosto ---------- */
-  const incM = YEARS.map(y => ROWS.filter(r => !esCierre(r) && incidenciaEneJul(r,y) && r.sexo === 'MUJER').length);
-  const incH = YEARS.map(y => ROWS.filter(r => !esCierre(r) && incidenciaEneJul(r,y) && r.sexo === 'HOMBRE').length);
+  // VERIFICADO: el sitio oficial INCLUYE los registros con estatus CIERRE en la incidencia.
+  const incM = YEARS.map(y => ROWS.filter(r => incidenciaEneJul(r,y) && r.sexo === 'MUJER').length);
+  const incH = YEARS.map(y => ROWS.filter(r => incidenciaEneJul(r,y) && r.sexo === 'HOMBRE').length);
   mkChart('c-enejul',{
     type:'bar',
     data:{ labels:YEARS, datasets:[
@@ -769,20 +1292,20 @@ function render(){
     `Se muestran sólo las desapariciones <b>ocurridas y reportadas</b> del 1 de enero al 31 de agosto de cada año.
      Con ese mismo criterio, antes de 2019 se tiene registro de <b>${fmt(preInc.length)}</b> desapariciones
      (<b>${fmt(preInc.filter(r=>r.sexo==='MUJER').length)}</b> mujeres y <b>${fmt(preInc.filter(r=>r.sexo==='HOMBRE').length)}</b> hombres),
-     contabilizadas incluyendo los registros con estatus «CIERRE», tal como lo hace la nota oficial.`;
+     contabilizadas con el mismo criterio de la serie, que incluye los registros con estatus «CIERRE».`;
   auditPanel('a-enejul',{
     cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','SEXO'],
-    filtro:'Mes de <code>FECHA DESAPARICION</code> ≤ 7 &nbsp;Y&nbsp; mes de <code>FECHA REPORTE</code> ≤ 7 &nbsp;Y&nbsp; ambos años iguales al año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>.',
+    filtro:'Mes de <code>FECHA DESAPARICION</code> ≤ 8 &nbsp;Y&nbsp; mes de <code>FECHA REPORTE</code> ≤ 8 &nbsp;Y&nbsp; ambos años iguales al año analizado. <b>Sin filtro de estatus.</b>',
     pasos:[
       'Crea cuatro columnas auxiliares: mes y año de <b>FECHA DESAPARICION</b>, y mes y año de <b>FECHA REPORTE</b>. Ejemplo: <code>=VALOR(IZQUIERDA(F2,2))</code> y <code>=VALOR(DERECHA(F2,4))</code>.',
       'Filtra: <b>mes de desaparición entre 1 y 8</b>. Esto define la ventana enero–agosto.',
       'Filtra además: <b>mes de reporte entre 1 y 8</b> y <b>año de reporte = año de desaparición</b>. Es la doble condición «ocurridas <i>y</i> reportadas» del criterio oficial.',
-      'Excluye las filas con <b>ESTATUS = "CIERRE"</b>: son registros cerrados por duplicidad o falta de competencia, no casos vigentes.',
+      '<b>No apliques ningún filtro de estatus.</b> La serie oficial cuenta los tres estatus, incluidos los registros con <code>CIERRE</code>: mide desapariciones ocurridas y reportadas en la ventana, no casos vigentes.',
       'Cuenta por año y por sexo.'
     ],
-    formula:'=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE",\n                      Sexo,"MUJER")',
+    formula:'=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Sexo,"MUJER")',
     check:`Para 2026 el total (mujeres + hombres) debe dar <b>${fmt(incM[7]+incH[7])}</b>, la cifra de incidencia enero–agosto que reportan los boletines oficiales.`,
-    flag:'La nota al pie oficial sobre las desapariciones previas a 2019 (3,381 registros) <b>sí incluye</b> los registros con estatus «CIERRE», mientras que la serie graficada los excluye. Es una inconsistencia de la fuente, no de este tablero: se replica la nota tal cual para que ambos números sean rastreables.'
+    flag:'Excluir los registros con estatus «CIERRE» parece razonable —el glosario los describe como registros cerrados por duplicidad o falta de competencia— y además reproduce la cifra del boletín de prensa. Pero <b>no</b> reproduce la del sitio oficial, que es la fuente a la que se alinea este tablero. Se verificó por dos vías independientes: la ventana enero–agosto de 2026 y la nota al pie de las desapariciones previas a 2019.'
   });
 
   /* ---------- No disponible: violencia ---------- */
@@ -873,7 +1396,8 @@ function render(){
   /* ---------- Porcentaje de localización ---------- */
   function pctSerie(anual){
     return YEARS.map(y => {
-      const den = ROWS.filter(r => !esCierre(r) && (anual ? incidenciaAnual(r,y) : incidenciaEneJul(r,y)));
+      // VERIFICADO contra el sitio: la cohorte del denominador INCLUYE los registros con estatus CIERRE.
+      const den = ROWS.filter(r => anual ? incidenciaAnual(r,y) : incidenciaEneJul(r,y));
       const num = den.filter(r => r.fLoc && r.fLoc.y === y && (anual ? true : r.fLoc.m <= CUT_MONTH)).length;
       return den.length ? +(num / den.length * 100).toFixed(2) : 0;
     });
@@ -894,30 +1418,30 @@ function render(){
 
   auditPanel('a-pct-anual',{
     cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','FECHA DE LOCALIZACION'],
-    filtro:'Año de desaparición = año de reporte = año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>. El numerador exige además que la localización haya ocurrido en ese mismo año.',
+    filtro:'Año de desaparición = año de reporte = año analizado, <b>sin filtro de estatus</b>. El numerador exige además que la localización haya ocurrido en ese mismo año.',
     pasos:[
       '<b>Denominador.</b> Cuenta las filas donde el <b>año de FECHA DESAPARICION</b> y el <b>año de FECHA REPORTE</b> son ambos el año que estás calculando. Es la cohorte de personas que desaparecieron y fueron reportadas dentro de ese año calendario.',
-      'Excluye del denominador las filas con <b>ESTATUS = "CIERRE"</b>.',
+      'No excluyas ningún estatus del denominador: los registros con <b>CIERRE</b> forman parte de la cohorte, tal como los contabiliza el sitio oficial.',
       '<b>Numerador.</b> De esa misma cohorte, cuenta cuántas tienen <b>año de FECHA DE LOCALIZACION</b> igual a ese año. Es decir: fueron localizadas dentro del mismo año en que desaparecieron.',
       'Divide numerador entre denominador y multiplica por 100.',
       'Importante: el numerador <b>no</b> es simplemente «ESTATUS = PERSONA LOCALIZADA». Una persona desaparecida en 2019 y localizada en 2024 cuenta en el denominador de 2019 pero <b>no</b> en su numerador.'
     ],
-    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025,\n                      Estatus,"&lt;&gt;CIERRE", AnioLoc,2025)\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025,\n                      Estatus,"&lt;&gt;CIERRE")\n\n\' Porcentaje\n= Numerador / Denominador * 100',
+    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025, AnioLoc,2025)\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025)\n\n\' Porcentaje\n= Numerador / Denominador * 100',
     flag:'El año en curso siempre aparece más bajo de lo que terminará siendo: sólo ha transcurrido una parte del año para que ocurran localizaciones. Por eso la comparación válida entre años es la gráfica siguiente, con ventana fija enero–agosto.'
   });
 
   auditPanel('a-pct-enejul',{
     cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','FECHA DE LOCALIZACION'],
-    filtro:'Desaparición y reporte dentro de enero–agosto del año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>. El numerador exige además localización dentro de esa misma ventana enero–agosto.',
+    filtro:'Desaparición y reporte dentro de enero–agosto del año analizado, <b>sin filtro de estatus</b>. El numerador exige además localización dentro de esa misma ventana enero–agosto.',
     pasos:[
-      '<b>Denominador.</b> Filtra: mes de desaparición ≤ 8, año de desaparición = año analizado, mes de reporte ≤ 8, año de reporte = año analizado, y <b>ESTATUS ≠ "CIERRE"</b>. Cuenta las filas.',
+      '<b>Denominador.</b> Filtra: mes de desaparición ≤ 8, año de desaparición = año analizado, mes de reporte ≤ 8 y año de reporte = año analizado. Cuenta las filas, <b>sin excluir ningún estatus</b>.',
       '<b>Numerador.</b> Sobre esas mismas filas, cuenta cuántas tienen <b>mes de FECHA DE LOCALIZACION ≤ 8</b> y <b>año de localización = año analizado</b>.',
       'Divide numerador entre denominador y multiplica por 100.',
       'Esta es la ventana que hace comparables los años entre sí: siempre son ocho meses de exposición al riesgo y ocho meses de oportunidad de localización.'
     ],
-    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE",\n                      AnioLoc,2026,   MesLoc,"&lt;=8")\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE")\n\n\' Porcentaje\n= Numerador / Denominador * 100',
-    check:`Para 2026 esta fórmula debe dar <b>${serieEneJul[7].toFixed(1)}%</b>, que es exactamente la cifra difundida en los boletines oficiales del Gobierno de Jalisco.`,
-    flag:'Para 2019–2025 el resultado de esta fórmula difiere de lo publicado por el sitio oficial entre 0.3 y 0.9 puntos porcentuales. La diferencia proviene del tratamiento exacto de los registros «CIERRE» dentro del denominador, que no puede determinarse con certeza a partir de una serie publicada con un solo decimal. Se documenta la divergencia en lugar de ajustar la cifra.'
+    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      AnioLoc,2026,   MesLoc,"&lt;=8")\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8")\n\n\' Porcentaje\n= Numerador / Denominador * 100',
+    check:`Para 2026 esta fórmula debe dar <b>${serieEneJul[7].toFixed(2)}%</b>, idéntico al dato publicado por el sitio oficial. Si el resultado es 66.98% en lugar de 66.55%, el denominador volvió a excluir los registros con estatus «CIERRE».`,
+    flag:'Las cifras del sitio oficial y las de los boletines de prensa no coinciden para el mismo indicador: para enero–julio de 2026 el boletín publicó 66.8% y el sitio 66.49%. Conviven dos metodologías oficiales. Este tablero se alinea siempre al <b>sitio</b>, por ser la fuente con versión pública descargable y trazable por folio.'
   });
 
   /* ---------- Municipios ---------- */
@@ -934,7 +1458,7 @@ function render(){
 
   mkChart('c-muni',{
     type:'bar',
-    data:{ labels: top15.map(m => m.muni.charAt(0) + m.muni.slice(1).toLowerCase()),
+    data:{ labels: top15.map(m => capMun(m.muni)),
       datasets:[{ label:'Personas desaparecidas', data: top15.map(m => m.des),
         backgroundColor:C.blue, borderRadius:4 }] },
     options: barOpts(false,true,false)
@@ -952,24 +1476,19 @@ function render(){
     flag:'El municipio corresponde al <b>lugar de la desaparición</b>, no al lugar de residencia de la persona ni al de su localización. Para esto último existe la columna <code>MUNICIPIO LOCALIZACION</code>, que responde a una pregunta distinta.'
   });
 
-  document.getElementById('tbl-muni').innerHTML = muniArr.map(m => {
-    const base = m.des + m.loc;
-    const pct = base ? (m.loc / base * 100) : 0;
-    return `<tr><td>${m.muni.charAt(0) + m.muni.slice(1).toLowerCase()}</td>
-      <td class="num">${fmt(m.des)}</td><td class="num">${fmt(m.loc)}</td>
-      <td class="num">${fmt(m.tot)}</td><td class="num">${pct.toFixed(1)}%</td></tr>`;
-  }).join('');
+  renderTablaMuni();
   auditPanel('a-tbl-muni',{
-    cols:['ESTATUS','MUNICIPIO DESAPARICION'],
-    filtro:'Sin filtro previo: se recorre el total de registros agrupando por <code>MUNICIPIO DESAPARICION</code>.',
+    cols:['MUNICIPIO DESAPARICION','ESTATUS','FECHA REPORTE','FECHA DESAPARICION','FECHA DE LOCALIZACION'],
+    filtro:'Base activa del <b>filtro de temporalidad</b> del inicio de la página, agrupada por <code>MUNICIPIO DESAPARICION</code>. Con el filtro sin acotar, la tabla recorre el total de registros.',
     pasos:[
+      'Aplica primero la ventana del filtro sobre el campo de fecha elegido. Si el filtro está en «toda la temporalidad», no hay filtro previo y la tabla es el acumulado histórico.',
       'Tabla dinámica: <b>MUNICIPIO DESAPARICION</b> en filas y <b>ESTATUS</b> en columnas.',
-      'La columna «Total registros» incluye los tres estatus, también los de <code>CIERRE</code>. Por eso puede ser mayor que la suma de desaparecidas + localizadas.',
-      'El «% localización» de esta tabla se calcula como localizadas ÷ (desaparecidas + localizadas) × 100, excluyendo los registros de cierre.',
-      'Este porcentaje <b>no</b> es comparable con el de las gráficas de porcentaje de localización: aquel usa cohortes por año y ventana temporal; éste es un acumulado histórico por municipio.'
+      '«Localizadas en el periodo» exige que el índice de <b>FECHA DE LOCALIZACION</b> caiga dentro de la ventana; «localizadas (cualquier fecha)» sólo mira el estatus. Con la ventana completa ambas columnas coinciden.',
+      'El <b>% de localización</b> se calcula como localizadas en el periodo ÷ casos del periodo × 100.',
+      'Este porcentaje no es comparable con el de las gráficas oficiales de porcentaje de localización: aquéllas usan cohortes anuales con doble condición de ocurrencia y reporte.'
     ],
-    formula:'=CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA LOCALIZADA")\n/ (CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA LOCALIZADA")\n +  CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA DESAPARECIDA")) * 100',
-    flag:'Los municipios pequeños tienen bases muy reducidas: un porcentaje alto o bajo puede deberse a unos pocos casos. Revisa siempre el número absoluto junto al porcentaje antes de sacar conclusiones.'
+    formula:'=CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",\n                      IndiceRep,"&gt;=Inicio", IndiceRep,"&lt;=Fin")\n\n=CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",\n                      IndiceRep,"&gt;=Inicio", IndiceRep,"&lt;=Fin",\n                      IndiceLoc,"&gt;=Inicio", IndiceLoc,"&lt;=Fin")',
+    flag:'Los municipios con pocos casos tienen porcentajes muy volátiles: un registro puede mover el resultado varios puntos. Revisa siempre el absoluto antes de ordenar por porcentaje y sacar conclusiones.'
   });
 
   /* ---------- Cobertura ---------- */
