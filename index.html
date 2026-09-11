@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro Estatal de Personas Desaparecidas — Jalisco | CGES</title>
+<meta name="description" content="Réplica auditable de las estadísticas del Registro Estatal de Personas Desaparecidas del Estado de Jalisco. Coordinación General Estratégica de Seguridad, Gobierno de Jalisco.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --cges-blue:#1F3A7F;
+  --cges-blue-dark:#152A5E;
+  --cges-gold:#C9A227;
+  --teal:#1B6C74;
+  --teal-light:#8FC7C2;
+  --salmon:#E4636C;
+  --salmon-light:#F2A9AC;
+  --grey-900:#1C2333;
+  --grey-700:#4A5568;
+  --grey-500:#7B8494;
+  --grey-300:#D5DAE3;
+  --grey-100:#F1F4F9;
+  --white:#fff;
+  --ok:#2E7D32;
+  --warn:#9C5700;
+  --warn-bg:#FFF6E0;
+  --radius:14px;
+  --shadow:0 1px 3px rgba(28,35,51,.07),0 8px 24px rgba(28,35,51,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--grey-100);color:var(--grey-900);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Montserrat',sans-serif;line-height:1.25}
+
+/* ---------- loader ---------- */
+#loader{position:fixed;inset:0;background:var(--cges-blue);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s,visibility .5s}
+#loader.hide{opacity:0;visibility:hidden}
+.spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader p{font-size:.9rem;letter-spacing:.03em;opacity:.9}
+#loader .sub{font-size:.75rem;opacity:.6;margin-top:6px}
+
+/* ---------- header ---------- */
+header{background:linear-gradient(135deg,var(--cges-blue) 0%,var(--cges-blue-dark) 100%);color:#fff;padding:34px 24px 30px}
+.head-in{max-width:1180px;margin:0 auto}
+.brandline{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.brandline img{height:44px;width:auto;background:rgba(255,255,255,.1);border-radius:8px;padding:5px}
+.brandline .tag{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.8;font-weight:500}
+header h1{font-size:1.95rem;font-weight:800;letter-spacing:-.02em}
+header h1 span{font-weight:400;opacity:.72}
+header .lede{margin-top:10px;font-size:.94rem;opacity:.85;max-width:760px;font-weight:300}
+.cut{display:inline-flex;align-items:center;gap:8px;margin-top:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:7px 15px;border-radius:99px;font-size:.8rem}
+.cut b{font-weight:600}
+nav.jump{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}
+nav.jump a{color:#fff;text-decoration:none;font-size:.78rem;padding:7px 14px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);transition:.2s}
+nav.jump a:hover{background:rgba(255,255,255,.22)}
+
+/* ---------- layout ---------- */
+main{max-width:1180px;margin:0 auto;padding:36px 24px 60px}
+.section-tag{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cges-blue);font-weight:700;margin-bottom:6px}
+.section-head{margin:46px 0 20px}
+.section-head:first-child{margin-top:0}
+.section-head h2{font-size:1.5rem;font-weight:700;color:var(--cges-blue)}
+.section-head p{font-size:.88rem;color:var(--grey-700);margin-top:6px;max-width:820px}
+
+/* ---------- kpi ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin-bottom:12px}
+.kpi{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border-top:3px solid var(--cges-blue)}
+.kpi.alt{border-top-color:var(--salmon)}
+.kpi .lbl{font-size:.71rem;text-transform:uppercase;letter-spacing:.07em;color:var(--grey-500);font-weight:600;min-height:32px}
+.kpi .val{font-family:'Montserrat';font-size:2.05rem;font-weight:800;color:var(--cges-blue);margin:4px 0 2px;letter-spacing:-.02em}
+.kpi.alt .val{color:var(--salmon)}
+.kpi .sub{font-size:.76rem;color:var(--grey-500)}
+
+/* ---------- card ---------- */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-head{padding:20px 22px 0}
+.card-head h3{font-size:1.03rem;font-weight:700;color:var(--grey-900)}
+.card-head .meta{font-size:.75rem;color:var(--grey-500);margin-top:3px}
+.card-body{padding:14px 22px 20px}
+.chart-wrap{position:relative;width:100%}
+.note{font-size:.75rem;color:var(--grey-700);background:var(--grey-100);border-left:3px solid var(--grey-300);padding:10px 13px;border-radius:0 7px 7px 0;margin-top:14px;line-height:1.55}
+.note b{color:var(--grey-900)}
+
+/* ---------- audit ---------- */
+.audit-btn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;background:#fff;color:var(--cges-blue);border:1.5px solid var(--cges-blue);border-radius:99px;padding:8px 16px;font-family:'Poppins';font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s}
+.audit-btn:hover{background:var(--cges-blue);color:#fff}
+.audit-btn .chev{transition:transform .25s;font-size:.7rem}
+.audit-btn.open .chev{transform:rotate(180deg)}
+.audit-panel{display:none;margin-top:14px;background:#FAFBFD;border:1px solid var(--grey-300);border-radius:10px;padding:18px 20px;font-size:.82rem}
+.audit-panel.open{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.audit-panel h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--cges-blue);margin:14px 0 7px;font-weight:700}
+.audit-panel h4:first-child{margin-top:0}
+.cols{display:flex;flex-wrap:wrap;gap:6px}
+.col-chip{background:var(--cges-blue);color:#fff;padding:3px 10px;border-radius:5px;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;font-weight:500}
+.audit-panel ol{margin:0;padding-left:20px}
+.audit-panel ol li{margin-bottom:7px;color:var(--grey-700)}
+.audit-panel ol li b{color:var(--grey-900)}
+.fx{background:#152A5E;color:#B9E4FF;font-family:ui-monospace,Menlo,monospace;font-size:.74rem;padding:12px 14px;border-radius:8px;overflow-x:auto;white-space:pre;line-height:1.7}
+.chk{background:#EAF6EC;border:1px solid #BFE2C5;color:#215B29;border-radius:8px;padding:10px 13px;font-size:.78rem;margin-top:10px}
+.chk b{font-weight:600}
+.flag{background:var(--warn-bg);border:1px solid #F0D79B;color:var(--warn);border-radius:8px;padding:11px 14px;font-size:.78rem;margin-top:10px;line-height:1.6}
+
+/* ---------- unavailable ---------- */
+.unavail{background:var(--warn-bg);border:1px dashed #E0BE72;border-radius:10px;padding:26px 22px;text-align:center;color:var(--warn)}
+.unavail .ic{font-size:1.7rem;display:block;margin-bottom:8px}
+.unavail h4{font-size:.95rem;margin-bottom:7px;color:var(--warn)}
+.unavail p{font-size:.82rem;line-height:1.65;max-width:660px;margin:0 auto}
+
+/* ---------- table ---------- */
+.tbl-scroll{max-height:430px;overflow-y:auto;border:1px solid var(--grey-300);border-radius:9px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{position:sticky;top:0;background:var(--cges-blue);color:#fff;padding:10px 13px;text-align:left;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em}
+tbody td{padding:9px 13px;border-bottom:1px solid var(--grey-100)}
+tbody tr:hover{background:var(--grey-100)}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* ---------- footer ---------- */
+footer{background:var(--cges-blue-dark);color:rgba(255,255,255,.8);padding:34px 24px;font-size:.8rem}
+.foot-in{max-width:1180px;margin:0 auto;display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+footer img{height:40px;background:rgba(255,255,255,.1);border-radius:7px;padding:5px}
+footer p{max-width:820px;line-height:1.65}
+footer a{color:#9FC2FF}
+.err{background:#FDECEC;border:1px solid #F5B5B5;color:#9B1C1C;padding:16px 18px;border-radius:10px;font-size:.85rem;margin-bottom:20px}
+
+@media(max-width:640px){
+  header h1{font-size:1.45rem}
+  main{padding:26px 15px 44px}
+  .card-head,.card-body{padding-left:15px;padding-right:15px}
+  .kpi .val{font-size:1.7rem}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p>Cargando información del Google Sheet…</p>
+  <p class="sub" id="loader-sub">Conectando con la fuente de datos…</p>
+</div>
+
+<header>
+  <div class="head-in">
+    <div class="brandline">
+      <img src="https://arjona87.github.io/TODOS/CGES_logo.png" alt="Coordinación General Estratégica de Seguridad — Gobierno de Jalisco">
+      <span class="tag">Coordinación General Estratégica de Seguridad · Gobierno de Jalisco</span>
+    </div>
+    <h1>Personas Desaparecidas <span>/ Registro Estatal (REPD) Jalisco</span></h1>
+    <p class="lede">Réplica auditable de las estadísticas de la Versión Pública del Registro Estatal de Personas Desaparecidas.
+      Cada gráfica incluye un botón que expone su fórmula exacta para poder reproducirla y auditarla en Excel.</p>
+    <div class="cut">📅 Información actualizada al <b id="cut-date">—</b> · <span id="rec-count">—</span> registros procesados</div>
+    <nav class="jump">
+      <a href="#resumen">Resumen general</a>
+      <a href="#desaparecidas">Personas desaparecidas</a>
+      <a href="#localizadas">Personas localizadas</a>
+      <a href="#territorio">Territorio</a>
+      <a href="#notas">Notas y fuente</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div id="err-box"></div>
+
+  <!-- ===================== RESUMEN GENERAL ===================== -->
+  <div class="section-head" id="resumen">
+    <div class="section-tag">Panorama general</div>
+    <h2>Resumen general</h2>
+    <p>Cifras acumuladas del registro a la fecha de corte. Las personas localizadas se contabilizan a partir del 1 de diciembre de 2018, conforme al criterio del sitio oficial.</p>
+  </div>
+
+  <div class="kpis" id="kpi-loc"></div>
+  <div class="kpis" id="kpi-des"></div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Personas localizadas por condición de localización y sexo</h3>
+      <div class="meta">Datos del 1 de diciembre de 2018 al corte</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:340px"><canvas id="c-resumen"></canvas></div>
+      <button class="audit-btn" data-audit="a-resumen">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-resumen"></div>
+    </div>
+  </div>
+
+  <!-- ===================== PERSONAS DESAPARECIDAS ===================== -->
+  <div class="section-head" id="desaparecidas">
+    <div class="section-tag">Sección 1</div>
+    <h2>Personas desaparecidas</h2>
+    <p>Personas que, a la fecha de corte, continúan con estatus de <b>persona desaparecida</b> en el registro, salvo donde se indique lo contrario.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Personas desaparecidas con y sin carpeta de investigación</h3>
+      <div class="meta">Datos a la fecha de corte</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:210px"><canvas id="c-carpeta"></canvas></div>
+      <button class="audit-btn" data-audit="a-carpeta">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-carpeta"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Personas desaparecidas, por año de desaparición y sexo (2019–2026)</h3>
+      <div class="meta">Personas que continúan desaparecidas, según el año en que ocurrió la desaparición</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:390px"><canvas id="c-anio-sexo"></canvas></div>
+      <div class="note" id="n-anio-sexo"></div>
+      <button class="audit-btn" data-audit="a-anio-sexo">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-anio-sexo"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Personas desaparecidas del 1 de enero al 31 de agosto, de 2019 a 2026</h3>
+      <div class="meta">Incidencia del periodo: desapariciones ocurridas <i>y</i> reportadas dentro de la ventana enero–agosto de cada año</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:390px"><canvas id="c-enejul"></canvas></div>
+      <div class="note" id="n-enejul"></div>
+      <button class="audit-btn" data-audit="a-enejul">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-enejul"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Desapariciones con violencia y sin violencia, por año de desaparición (2019–2026)</h3>
+      <div class="meta">Gráfica presente en el sitio oficial</div>
+    </div>
+    <div class="card-body">
+      <div class="unavail">
+        <span class="ic">⚠️</span>
+        <h4>No reproducible con la fuente de datos de este tablero</h4>
+        <p>El sitio oficial construye esta gráfica con la variable <b>violencia / sin violencia</b>, que proviene de las carpetas de
+        investigación de la Vicefiscalía en Personas Desaparecidas. <b>Esa variable no existe en ninguna de las 18 columnas
+        publicadas en la descarga abierta del REPD</b>, que es la única fuente de este tablero. No se estima ni se aproxima:
+        se declara faltante. Ver el botón de auditoría para el detalle de la verificación.</p>
+      </div>
+      <button class="audit-btn" data-audit="a-violencia">📊 Por qué no se puede auditar con esta fuente <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-violencia"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Mujeres desaparecidas, por año de desaparición y rango de edad (2019–2026)</h3>
+      <div class="meta">Personas que continúan desaparecidas</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:390px"><canvas id="c-edad-m"></canvas></div>
+      <div class="note" id="n-edad-m"></div>
+      <button class="audit-btn" data-audit="a-edad-m">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-edad-m"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Hombres desaparecidos, por año de desaparición y rango de edad (2019–2026)</h3>
+      <div class="meta">Personas que continúan desaparecidas</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:390px"><canvas id="c-edad-h"></canvas></div>
+      <div class="note" id="n-edad-h"></div>
+      <button class="audit-btn" data-audit="a-edad-h">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-edad-h"></div>
+    </div>
+  </div>
+
+  <!-- ===================== PERSONAS LOCALIZADAS ===================== -->
+  <div class="section-head" id="localizadas">
+    <div class="section-tag">Sección 2</div>
+    <h2>Personas localizadas</h2>
+    <p>Personas cuya localización fue confirmada por la autoridad competente. Serie contabilizada desde el 1 de diciembre de 2018.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Personas localizadas, por condición de localización y si fueron o no víctimas de delito</h3>
+      <div class="meta">Datos del 1 de diciembre de 2018 al corte</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:240px"><canvas id="c-cond-todas"></canvas></div>
+      <button class="audit-btn" data-audit="a-cond">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-cond"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Porcentaje de localización por año (2019–2026)</h3>
+      <div class="meta">Año calendario completo: 1 de enero al 31 de diciembre</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:370px"><canvas id="c-pct-anual"></canvas></div>
+      <div class="note"><b>Definición oficial:</b> refleja el porcentaje de personas que fueron localizadas en el año, respecto del total de personas cuya desaparición y reporte ocurrieron entre el 1 de enero y el 31 de diciembre de ese año.</div>
+      <button class="audit-btn" data-audit="a-pct-anual">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-pct-anual"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Porcentaje de localización del 1 de enero al 31 de agosto, de 2019 a 2026</h3>
+      <div class="meta">Ventana comparable enero–agosto · es la cifra citada en los boletines oficiales</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:370px"><canvas id="c-pct-enejul"></canvas></div>
+      <div class="note"><b>Definición oficial:</b> refleja el porcentaje de personas que fueron localizadas en el periodo del 1 de enero al 31 de agosto de cada año, respecto del total de personas cuya desaparición y reporte ocurrieron ese mismo periodo de cada año.</div>
+      <button class="audit-btn" data-audit="a-pct-enejul">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-pct-enejul"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Mujeres localizadas, por condición de localización y si fueron o no víctimas de delito</h3>
+      <div class="meta">Datos del 1 de diciembre de 2018 al corte</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:240px"><canvas id="c-cond-m"></canvas></div>
+      <button class="audit-btn" data-audit="a-cond-m">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-cond-m"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Hombres localizados, por condición de localización y si fueron o no víctimas de delito</h3>
+      <div class="meta">Datos del 1 de diciembre de 2018 al corte</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:240px"><canvas id="c-cond-h"></canvas></div>
+      <button class="audit-btn" data-audit="a-cond-h">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-cond-h"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TERRITORIO ===================== -->
+  <div class="section-head" id="territorio">
+    <div class="section-tag">Sección 3</div>
+    <h2>Distribución territorial</h2>
+    <p>El sitio oficial presenta un mapa interactivo de los 125 municipios. La descarga abierta del REPD no incluye coordenadas geográficas, por lo que aquí se presenta el equivalente tabular y gráfico por municipio de desaparición.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Municipios con mayor número de personas desaparecidas</h3>
+      <div class="meta">Personas que continúan desaparecidas, por municipio de desaparición · 15 principales</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:430px"><canvas id="c-muni"></canvas></div>
+      <button class="audit-btn" data-audit="a-muni">📊 Cómo auditar esta gráfica en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-muni"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Detalle municipal completo</h3>
+      <div class="meta">Personas desaparecidas y localizadas por municipio de desaparición</div>
+    </div>
+    <div class="card-body">
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Municipio de desaparición</th><th style="text-align:right">Desaparecidas</th><th style="text-align:right">Localizadas</th><th style="text-align:right">Total registros</th><th style="text-align:right">% localización</th></tr></thead>
+          <tbody id="tbl-muni"></tbody>
+        </table>
+      </div>
+      <button class="audit-btn" data-audit="a-tbl-muni">📊 Cómo auditar esta tabla en Excel <span class="chev">▼</span></button>
+      <div class="audit-panel" id="a-tbl-muni"></div>
+    </div>
+  </div>
+
+  <!-- ===================== NOTAS ===================== -->
+  <div class="section-head" id="notas">
+    <div class="section-tag">Transparencia de datos</div>
+    <h2>Notas metodológicas y fuente</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-body" style="padding-top:22px">
+      <p style="font-size:.87rem;color:var(--grey-700);margin-bottom:14px">
+        <b>Fuente única:</b> Google Sheet propio de la CGES que replica la descarga abierta de la Versión Pública del
+        Registro Estatal de Personas Desaparecidas del Estado de Jalisco (COBUPEJ). El Sheet es la fuente de verdad —
+        este tablero nunca modifica, corrige ni reinterpreta sus valores: los agrega y los muestra.
+      </p>
+      <div class="flag">
+        <b>Sobre el estatus «CIERRE».</b> El glosario oficial del REPD define <i>Cierre</i> como el registro cerrado por no
+        competencia territorial, no competencia de delito, acumulación (duplicidad) o búsqueda de familiares. Estos registros
+        <b>no son casos vigentes ni casos resueltos</b>, por lo que se excluyen de los cálculos de incidencia y de porcentaje de
+        localización, tal como lo hacen los boletines oficiales. En el tablero se reportan por separado para no ocultarlos.
+      </div>
+      <div class="flag" style="margin-top:10px">
+        <b>Divergencia documentada.</b> Con la definición aquí aplicada, el porcentaje de localización enero–agosto 2026
+        reproduce la cifra difundida por el Gobierno del Estado. Para 2019–2025 el resultado difiere de lo publicado en
+        un rango de <b>0.3 a 0.9 puntos porcentuales</b>. La causa es el tratamiento preciso de los registros con estatus
+        «CIERRE» en el denominador, que no puede determinarse con certeza a partir de una serie publicada con un solo decimal.
+        Se reporta la diferencia en lugar de forzar el ajuste.
+      </div>
+      <div id="cobertura" style="margin-top:16px"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="foot-in">
+    <img src="https://arjona87.github.io/TODOS/CGES_logo.png" alt="CGES">
+    <p>
+      Coordinación General Estratégica de Seguridad, Gobierno de Jalisco. Fuente: Comisión de Búsqueda de Personas del Estado
+      de Jalisco (COBUPEJ), Versión Pública del Registro Estatal de Personas Desaparecidas —
+      <a href="https://version-publica-repd.jalisco.gob.mx/estadisticas" target="_blank" rel="noopener">version-publica-repd.jalisco.gob.mx</a>.
+      La información del registro se actualiza de manera mensual, los días 10 de cada mes. Las cifras están sujetas a
+      actualización conforme avanzan las acciones de búsqueda e investigación.<br><br>
+      Elaboración: CGES/DGAPP/AA · Este tablero es una réplica auditable con fines de análisis institucional y no sustituye
+      a la fuente oficial.
+    </p>
+  </div>
+</footer>
+
+<script>
+/* =======================================================================
+   CONFIGURACIÓN
+   ======================================================================= */
+const SHEET_ID = '123OgRdIIsKXSNNWPiFl5EXZv6Azm6MmCmYqvu6yEeQY';
+const SHEET_TAB = 'DATOS';
+const HEADER_ROW = 13;          // los encabezados reales están en la fila 13
+const YEARS = [2019,2020,2021,2022,2023,2024,2025,2026];
+const CUT_MONTH = 8;            // ventana comparable enero–agosto
+
+const C = {
+  blue:'#1F3A7F', teal:'#1B6C74', tealLight:'#8FC7C2', salmon:'#E4636C',
+  salmonLight:'#F2A9AC', gold:'#C9A227', grey:'#9AA4B5', navy:'#152A5E'
+};
+const AGE_COLORS = ['#BFE0DC','#8FC7C2','#4E9A9E','#1B6C74','#124C52','#0A3034'];
+
+let ROWS = [], CUT_TEXT = '';
+
+/* =======================================================================
+   CARGA DE DATOS — gviz/tq vía JSONP (nunca /export?format=csv: falla por CORS)
+   ======================================================================= */
+function jsonp(url, cbName){
+  return new Promise((resolve, reject) => {
+    window[cbName] = d => { resolve(d); delete window[cbName]; };
+    const s = document.createElement('script');
+    s.src = url + '&tqx=out:json;responseHandler:' + cbName;
+    s.onerror = () => reject(new Error('No se pudo contactar el Google Sheet.'));
+    document.head.appendChild(s);
+    setTimeout(() => { if (window[cbName]) reject(new Error('Tiempo de espera agotado al leer el Sheet.')); }, 45000);
+  });
+}
+const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_TAB)}`;
+
+function cell(r, i){
+  const c = r.c && r.c[i];
+  if (!c || c.v === null || c.v === undefined) return '';
+  return String(c.v).trim();
+}
+/** 'MM/AAAA' -> {m, y}  |  null si no aplica */
+function ym(s){
+  if (!s || s.indexOf('/') < 0) return null;
+  const p = s.split('/'), m = parseInt(p[0],10), y = parseInt(p[1],10);
+  if (!m || !y || m < 1 || m > 12) return null;
+  return { m, y };
+}
+
+async function load(){
+  try{
+    document.getElementById('loader-sub').textContent = 'Leyendo metadatos del registro…';
+    const meta = await jsonp(`${base}&range=A1:A1&headers=0`, 'cbMeta');
+    const raw = (meta.table.rows[0] && meta.table.rows[0].c[0] && meta.table.rows[0].c[0].v) || '';
+    const mm = String(raw).match(/corte del\s*([0-9]{2}-[0-9]{2}-[0-9]{4})/i);
+    if (mm){
+      const p = mm[1].split('-');
+      const MESES = ['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      CUT_TEXT = `${parseInt(p[0],10)} de ${MESES[parseInt(p[1],10)]} de ${p[2]}`;
+    }
+
+    document.getElementById('loader-sub').textContent = 'Descargando registros del REPD…';
+    const d = await jsonp(`${base}&range=A${HEADER_ROW}:R&headers=1`, 'cbData');
+
+    ROWS = d.table.rows.filter(r => r.c && r.c[0] && r.c[0].v).map(r => ({
+      sexo:     cell(r,1),
+      rango:    cell(r,3),
+      fRep:     ym(cell(r,4)),
+      fDes:     ym(cell(r,5)),
+      munDes:   cell(r,7) || 'SE IGNORA',
+      estatus:  cell(r,8),
+      fLoc:     ym(cell(r,9)),
+      condLoc:  cell(r,10),
+      clasLoc:  cell(r,11),
+      tipoCierre: cell(r,15),
+      carpeta:  cell(r,17).toUpperCase()
+    }));
+
+    if (!ROWS.length) throw new Error('El Sheet respondió pero no devolvió registros.');
+    document.getElementById('loader-sub').textContent = 'Calculando indicadores…';
+    render();
+    document.getElementById('loader').classList.add('hide');
+  }catch(e){
+    document.getElementById('loader').classList.add('hide');
+    document.getElementById('err-box').innerHTML =
+      `<div class="err"><b>No fue posible cargar los datos.</b><br>${e.message}<br><br>
+       Verifica que el Google Sheet esté compartido como <i>«Cualquier persona con el enlace — Lector»</i>
+       y que la pestaña se llame exactamente <code>${SHEET_TAB}</code>.</div>`;
+  }
+}
+
+/* =======================================================================
+   PREDICADOS — cada uno corresponde 1:1 con un filtro auditable en Excel
+   ======================================================================= */
+const esDesaparecida = r => r.estatus === 'PERSONA DESAPARECIDA';
+const esLocalizada   = r => r.estatus === 'PERSONA LOCALIZADA';
+const esCierre       = r => r.estatus === 'CIERRE';
+/** Localización confirmada a partir del 1 de diciembre de 2018 (criterio del sitio oficial) */
+const locDesdeDic18  = r => r.fLoc && (r.fLoc.y > 2018 || (r.fLoc.y === 2018 && r.fLoc.m === 12));
+/** Desaparición ocurrida Y reportada dentro de enero–agosto del mismo año */
+const incidenciaEneJul = (r,y) =>
+  r.fDes && r.fRep && r.fDes.y === y && r.fDes.m <= CUT_MONTH &&
+  r.fRep.y === y && r.fRep.m <= CUT_MONTH;
+/** Desaparición ocurrida Y reportada dentro del mismo año calendario */
+const incidenciaAnual = (r,y) => r.fDes && r.fRep && r.fDes.y === y && r.fRep.y === y;
+
+/** Agrupación de rangos de edad usada por el sitio oficial.
+    NOTA VERIFICADA: 'SE IGNORA' se contabiliza dentro del grupo '50+'. */
+const AGE_GROUPS = ['0-14','15-19','20-29','30-39','40-49','50+'];
+function grupoEdad(rango){
+  if (['0-4','5-9','10-14'].includes(rango)) return '0-14';
+  if (rango === '15-19') return '15-19';
+  if (['20-24','25-29'].includes(rango)) return '20-29';
+  if (['30-34','35-39'].includes(rango)) return '30-39';
+  if (['40-44','45-49'].includes(rango)) return '40-49';
+  return '50+';
+}
+const fmt = n => n.toLocaleString('es-MX');
+
+/* =======================================================================
+   OPCIONES DE GRÁFICA
+   ======================================================================= */
+Chart.defaults.font.family = "'Poppins',sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#4A5568';
+
+function barOpts(stacked, horizontal, pct){
+  return {
+    indexAxis: horizontal ? 'y' : 'x',
+    responsive: true, maintainAspectRatio: false,
+    plugins:{
+      legend:{ display:true, position:'top', align:'start',
+        labels:{ boxWidth:11, boxHeight:11, usePointStyle:true, pointStyle:'rectRounded', padding:14 } },
+      tooltip:{ backgroundColor:'#152A5E', padding:11, cornerRadius:7, titleFont:{weight:'600'},
+        callbacks:{ label: ctx => {
+          const v = ctx.parsed[horizontal ? 'x' : 'y'];
+          return ` ${ctx.dataset.label}: ${pct ? v.toFixed(1)+'%' : fmt(v)}`;
+        } } }
+    },
+    scales:{
+      // En barras horizontales el eje X es el numérico y el Y el de categorías; en verticales, al revés.
+      x:{ stacked, grid:{ display:horizontal, color:'#EDF0F6' }, border:{display:false},
+          ticks:{ callback: function(v){
+            if (!horizontal) return this.getLabelForValue(v);
+            return pct ? v + '%' : fmt(v);
+          } } },
+      y:{ stacked, grid:{ display:!horizontal, color:'#EDF0F6' }, border:{display:false},
+          ticks:{ callback: function(v){
+            if (horizontal) return this.getLabelForValue(v);
+            return pct ? v + '%' : fmt(v);
+          } } }
+    }
+  };
+}
+
+/** Chart.js 4 requiere el elemento canvas, no su id. */
+function mkChart(id, cfg){ return new Chart(document.getElementById(id), cfg); }
+
+/* =======================================================================
+   BOTONES DE AUDITORÍA
+   ======================================================================= */
+function auditPanel(id, cfg){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `
+    <h4>Columnas del Sheet utilizadas</h4>
+    <div class="cols">${cfg.cols.map(c => `<span class="col-chip">${c}</span>`).join('')}</div>
+    <h4>Filtro que debes aplicar</h4>
+    <div style="color:var(--grey-700)">${cfg.filtro}</div>
+    <h4>Pasos en Excel</h4>
+    <ol>${cfg.pasos.map(p => `<li>${p}</li>`).join('')}</ol>
+    <h4>Fórmula de Excel</h4>
+    <div class="fx">${cfg.formula}</div>
+    ${cfg.check ? `<div class="chk">✅ <b>Verificación:</b> ${cfg.check}</div>` : ''}
+    ${cfg.flag  ? `<div class="flag">⚠️ <b>Nota crítica:</b> ${cfg.flag}</div>` : ''}`;
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.audit-btn');
+  if (!btn) return;
+  const panel = document.getElementById(btn.dataset.audit);
+  btn.classList.toggle('open');
+  panel.classList.toggle('open');
+});
+
+/* =======================================================================
+   RENDER
+   ======================================================================= */
+function render(){
+  document.getElementById('cut-date').textContent = CUT_TEXT || '—';
+  document.getElementById('rec-count').textContent = fmt(ROWS.length);
+
+  const DES = ROWS.filter(esDesaparecida);
+  const LOC = ROWS.filter(r => esLocalizada(r) && locDesdeDic18(r));
+  const CIE = ROWS.filter(esCierre);
+
+  /* ---------- KPIs ---------- */
+  const locM = LOC.filter(r => r.sexo === 'MUJER').length;
+  const locH = LOC.filter(r => r.sexo === 'HOMBRE').length;
+  const desM = DES.filter(r => r.sexo === 'MUJER').length;
+  const desH = DES.filter(r => r.sexo === 'HOMBRE').length;
+  const conCI = DES.filter(r => r.carpeta === 'SÍ' || r.carpeta === 'SI').length;
+  const sinCI = DES.filter(r => r.carpeta === 'NO').length;
+
+  document.getElementById('kpi-loc').innerHTML = `
+    ${kpi('Personas localizadas desde el 1 de diciembre de 2018', fmt(LOC.length), 'Localización confirmada por la autoridad')}
+    ${kpi('Mujeres localizadas', fmt(locM), pctTxt(locM, LOC.length) + ' del total localizado')}
+    ${kpi('Hombres localizados', fmt(locH), pctTxt(locH, LOC.length) + ' del total localizado')}`;
+  document.getElementById('kpi-des').innerHTML = `
+    ${kpi('Personas desaparecidas', fmt(DES.length), 'Estatus vigente a la fecha de corte', true)}
+    ${kpi('Con carpeta de investigación', fmt(conCI), pctTxt(conCI, DES.length) + ' de las desaparecidas', true)}
+    ${kpi('Sin carpeta de investigación', fmt(sinCI), pctTxt(sinCI, DES.length) + ' de las desaparecidas', true)}
+    ${kpi('Mujeres / Hombres desaparecidos', fmt(desM) + ' / ' + fmt(desH), 'Desagregación por sexo', true)}`;
+
+  /* ---------- Resumen: condición × sexo ---------- */
+  const sexos = ['MUJER','HOMBRE'];
+  ROWS.forEach(r => { if (r.sexo && !sexos.includes(r.sexo)) sexos.push(r.sexo); });
+  mkChart('c-resumen', {
+    type:'bar',
+    data:{ labels:['Con vida','Sin vida'],
+      datasets: sexos.map((s,i) => ({
+        label: s.charAt(0) + s.slice(1).toLowerCase(),
+        data: ['CON VIDA','SIN VIDA'].map(c => LOC.filter(r => r.condLoc === c && r.sexo === s).length),
+        backgroundColor: [C.salmon, C.teal, C.gold, C.grey][i % 4], borderRadius:5, maxBarThickness:74
+      })) },
+    options: barOpts(false,false,false)
+  });
+  auditPanel('a-resumen',{
+    cols:['ESTATUS','FECHA DE LOCALIZACION','CONDICION LOCALIZACION','SEXO'],
+    filtro:'<code>ESTATUS = "PERSONA LOCALIZADA"</code> &nbsp;Y&nbsp; la <code>FECHA DE LOCALIZACION</code> es diciembre de 2018 o posterior.',
+    pasos:[
+      'Filtra la columna <b>ESTATUS</b> dejando solo <code>PERSONA LOCALIZADA</code>.',
+      'La <b>FECHA DE LOCALIZACION</b> viene como texto <code>MM/AAAA</code>. Crea una columna auxiliar que extraiga el año: <code>=VALOR(DERECHA(J2,4))</code> y otra con el mes: <code>=VALOR(IZQUIERDA(J2,2))</code>.',
+      'Conserva únicamente las filas donde <b>año &gt; 2018</b>, o bien <b>año = 2018 y mes = 12</b>. Ese es el punto de partida del 1 de diciembre de 2018.',
+      'Cuenta las filas cruzando <b>CONDICION LOCALIZACION</b> (Con vida / Sin vida) contra <b>SEXO</b>. Una tabla dinámica lo resuelve directamente.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(Estatus,"PERSONA LOCALIZADA",\n                      Condicion,"CON VIDA",\n                      Sexo,"MUJER",\n                      AnioLoc,"&gt;2018")\n\n\' Sumar aparte los localizados en 12/2018:\n=CONTAR.SI.CONJUNTO(Estatus,"PERSONA LOCALIZADA",Condicion,"CON VIDA",\n                      Sexo,"MUJER",AnioLoc,2018,MesLoc,12)',
+    check:`La suma de las cuatro barras debe dar exactamente <b>${fmt(LOC.length)}</b>, el mismo total que la tarjeta «Personas localizadas desde el 1 de diciembre de 2018».`
+  });
+
+  /* ---------- Carpeta de investigación ---------- */
+  mkChart('c-carpeta',{
+    type:'bar',
+    data:{ labels:['Con carpeta de investigación','Sin carpeta de investigación'],
+      datasets:[{ label:'Personas desaparecidas', data:[conCI,sinCI],
+        backgroundColor:[C.teal,C.salmon], borderRadius:5, maxBarThickness:44 }] },
+    options: barOpts(false,true,false)
+  });
+  auditPanel('a-carpeta',{
+    cols:['ESTATUS','CARPETA DE INVESTIGACIÓN'],
+    filtro:'<code>ESTATUS = "PERSONA DESAPARECIDA"</code>, separando por el valor de <code>CARPETA DE INVESTIGACIÓN</code> (Sí / NO).',
+    pasos:[
+      'Filtra <b>ESTATUS</b> dejando solo <code>PERSONA DESAPARECIDA</code>. No incluyas las localizadas ni las de estatus <code>CIERRE</code>.',
+      'Cuenta cuántas de esas filas tienen <b>CARPETA DE INVESTIGACIÓN = "Sí"</b> → barra superior.',
+      'Cuenta cuántas tienen <b>CARPETA DE INVESTIGACIÓN = "NO"</b> → barra inferior.',
+      'Cuidado con el acento: el valor en la base es <code>Sí</code> con tilde. Si tu fórmula devuelve cero, es casi siempre por esto.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(Estatus,"PERSONA DESAPARECIDA",Carpeta,"Sí")\n=CONTAR.SI.CONJUNTO(Estatus,"PERSONA DESAPARECIDA",Carpeta,"NO")',
+    check:`Las dos barras deben sumar el total de personas desaparecidas: ${fmt(conCI)} + ${fmt(sinCI)} = <b>${fmt(DES.length)}</b>.`
+  });
+
+  /* ---------- Desaparecidas por año y sexo ---------- */
+  const desAnioM = YEARS.map(y => DES.filter(r => r.fDes && r.fDes.y === y && r.sexo === 'MUJER').length);
+  const desAnioH = YEARS.map(y => DES.filter(r => r.fDes && r.fDes.y === y && r.sexo === 'HOMBRE').length);
+  mkChart('c-anio-sexo',{
+    type:'bar',
+    data:{ labels:YEARS, datasets:[
+      { label:'Mujeres', data:desAnioM, backgroundColor:C.salmon, borderRadius:4 },
+      { label:'Hombres', data:desAnioH, backgroundColor:C.teal,   borderRadius:4 }] },
+    options: barOpts(true,true,false)
+  });
+  const pre19  = DES.filter(r => r.fDes && r.fDes.y <= 2018);
+  const pre19M = pre19.filter(r => r.sexo === 'MUJER').length;
+  const pre19H = pre19.filter(r => r.sexo === 'HOMBRE').length;
+  document.getElementById('n-anio-sexo').innerHTML =
+    `En la gráfica se muestran sólo los datos de desapariciones ocurridas a partir del 1 de enero de 2019.
+     Se tiene registro de <b>${fmt(pre19.length)}</b> personas que continúan desaparecidas cuya desaparición ocurrió antes de esa fecha:
+     <b>${fmt(pre19M)}</b> mujeres y <b>${fmt(pre19H)}</b> hombres.`;
+  auditPanel('a-anio-sexo',{
+    cols:['ESTATUS','FECHA DESAPARICION','SEXO'],
+    filtro:'<code>ESTATUS = "PERSONA DESAPARECIDA"</code> &nbsp;Y&nbsp; el año de <code>FECHA DESAPARICION</code> entre 2019 y 2026.',
+    pasos:[
+      'Filtra <b>ESTATUS</b> dejando solo <code>PERSONA DESAPARECIDA</code>. Esta gráfica mide el <b>saldo pendiente</b>, no la incidencia: cuenta a quienes siguen sin ser localizadas.',
+      'Extrae el año de <b>FECHA DESAPARICION</b> (texto <code>MM/AAAA</code>) con <code>=VALOR(DERECHA(F2,4))</code>.',
+      'Para cada año de 2019 a 2026, cuenta las filas con <b>SEXO = "MUJER"</b> → segmento rosa de la barra.',
+      'Repite con <b>SEXO = "HOMBRE"</b> → segmento verde. La barra completa es la suma de ambos.',
+      'Todo lo que tenga año de desaparición ≤ 2018 queda fuera de la gráfica y se reporta en la nota al pie.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(Estatus,"PERSONA DESAPARECIDA",\n                      AnioDesap,2026,\n                      Sexo,"MUJER")',
+    check:`Suma todas las barras (2019–2026) y agrégale las ${fmt(pre19.length)} personas de la nota al pie: el resultado debe ser <b>${fmt(DES.length)}</b>, el total de personas desaparecidas.`
+  });
+
+  /* ---------- Incidencia enero–agosto ---------- */
+  const incM = YEARS.map(y => ROWS.filter(r => !esCierre(r) && incidenciaEneJul(r,y) && r.sexo === 'MUJER').length);
+  const incH = YEARS.map(y => ROWS.filter(r => !esCierre(r) && incidenciaEneJul(r,y) && r.sexo === 'HOMBRE').length);
+  mkChart('c-enejul',{
+    type:'bar',
+    data:{ labels:YEARS, datasets:[
+      { label:'Mujeres', data:incM, backgroundColor:C.salmon, borderRadius:4 },
+      { label:'Hombres', data:incH, backgroundColor:C.teal,   borderRadius:4 }] },
+    options: barOpts(true,true,false)
+  });
+  const preInc  = ROWS.filter(r => r.fDes && r.fRep && r.fDes.y <= 2018 && r.fDes.m <= CUT_MONTH && r.fRep.y === r.fDes.y && r.fRep.m <= CUT_MONTH);
+  document.getElementById('n-enejul').innerHTML =
+    `Se muestran sólo las desapariciones <b>ocurridas y reportadas</b> del 1 de enero al 31 de agosto de cada año.
+     Con ese mismo criterio, antes de 2019 se tiene registro de <b>${fmt(preInc.length)}</b> desapariciones
+     (<b>${fmt(preInc.filter(r=>r.sexo==='MUJER').length)}</b> mujeres y <b>${fmt(preInc.filter(r=>r.sexo==='HOMBRE').length)}</b> hombres),
+     contabilizadas incluyendo los registros con estatus «CIERRE», tal como lo hace la nota oficial.`;
+  auditPanel('a-enejul',{
+    cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','SEXO'],
+    filtro:'Mes de <code>FECHA DESAPARICION</code> ≤ 7 &nbsp;Y&nbsp; mes de <code>FECHA REPORTE</code> ≤ 7 &nbsp;Y&nbsp; ambos años iguales al año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>.',
+    pasos:[
+      'Crea cuatro columnas auxiliares: mes y año de <b>FECHA DESAPARICION</b>, y mes y año de <b>FECHA REPORTE</b>. Ejemplo: <code>=VALOR(IZQUIERDA(F2,2))</code> y <code>=VALOR(DERECHA(F2,4))</code>.',
+      'Filtra: <b>mes de desaparición entre 1 y 8</b>. Esto define la ventana enero–agosto.',
+      'Filtra además: <b>mes de reporte entre 1 y 8</b> y <b>año de reporte = año de desaparición</b>. Es la doble condición «ocurridas <i>y</i> reportadas» del criterio oficial.',
+      'Excluye las filas con <b>ESTATUS = "CIERRE"</b>: son registros cerrados por duplicidad o falta de competencia, no casos vigentes.',
+      'Cuenta por año y por sexo.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE",\n                      Sexo,"MUJER")',
+    check:`Para 2026 el total (mujeres + hombres) debe dar <b>${fmt(incM[7]+incH[7])}</b>, la cifra de incidencia enero–agosto que reportan los boletines oficiales.`,
+    flag:'La nota al pie oficial sobre las desapariciones previas a 2019 (3,381 registros) <b>sí incluye</b> los registros con estatus «CIERRE», mientras que la serie graficada los excluye. Es una inconsistencia de la fuente, no de este tablero: se replica la nota tal cual para que ambos números sean rastreables.'
+  });
+
+  /* ---------- No disponible: violencia ---------- */
+  auditPanel('a-violencia',{
+    cols:['— ninguna columna disponible —'],
+    filtro:'No aplicable. La variable requerida no está publicada en la descarga abierta.',
+    pasos:[
+      'Abre la pestaña <b>DATOS</b> del Sheet y revisa los encabezados de la fila 13: son 18 columnas, de la A a la R.',
+      'Ninguna de ellas contiene el atributo <i>violencia / sin violencia</i>. Las columnas de clasificación disponibles son <b>CONDICION LOCALIZACION</b> (con vida / sin vida) y <b>CLASIFICACION LOCALIZACION</b> (víctima o no de delito), y <b>ambas aplican únicamente a personas ya localizadas</b>.',
+      'La gráfica oficial se construye sobre las carpetas de investigación de la Vicefiscalía en Personas Desaparecidas, un insumo interno que no forma parte del archivo público.',
+      'Conclusión auditable: el dato no es derivable de esta fuente. Para reproducirlo haría falta solicitar la variable a la VFPD por transparencia o convenio de intercambio de información.'
+    ],
+    formula:'\' No existe fórmula posible: la columna origen no está en el archivo.\n\' Cualquier estimación sería una imputación, no una réplica.',
+    flag:'Se deja el espacio de la gráfica visible y declarado como faltante, en lugar de omitirlo en silencio o de rellenarlo con una aproximación. Como referencia documental, el sitio oficial indica que hasta el 31 de diciembre de 2018 se tenía registro de 94 mujeres desaparecidas con violencia, 432 mujeres sin violencia, 1,173 hombres con violencia y 4,150 hombres sin violencia.'
+  });
+
+  /* ---------- Rango de edad ---------- */
+  ['MUJER','HOMBRE'].forEach(sexo => {
+    const key = sexo === 'MUJER' ? 'm' : 'h';
+    const ds = AGE_GROUPS.map((g,i) => ({
+      label:g, backgroundColor:AGE_COLORS[i], borderRadius:3,
+      data: YEARS.map(y => DES.filter(r => r.sexo === sexo && r.fDes && r.fDes.y === y && grupoEdad(r.rango) === g).length)
+    }));
+    mkChart('c-edad-' + key, { type:'bar', data:{ labels:YEARS, datasets:ds }, options: barOpts(true,true,false) });
+
+    const pre = DES.filter(r => r.sexo === sexo && r.fDes && r.fDes.y <= 2018);
+    const det = AGE_GROUPS.map(g => `${g}: <b>${fmt(pre.filter(r => grupoEdad(r.rango) === g).length)}</b>`).join(' · ');
+    document.getElementById('n-edad-' + key).innerHTML =
+      `Se muestran sólo ${sexo === 'MUJER' ? 'las mujeres' : 'los hombres'} cuya desaparición ocurrió a partir del 1 de enero de 2019.
+       ${sexo === 'MUJER' ? 'Las mujeres desaparecidas' : 'Los hombres desaparecidos'} hasta el 31 de diciembre de 2018
+       (<b>${fmt(pre.length)}</b>) se ubican en los siguientes rangos: ${det}.`;
+
+    auditPanel('a-edad-' + key,{
+      cols:['ESTATUS','SEXO','FECHA DESAPARICION','RANGO DE EDAD'],
+      filtro:`<code>ESTATUS = "PERSONA DESAPARECIDA"</code> &nbsp;Y&nbsp; <code>SEXO = "${sexo}"</code> &nbsp;Y&nbsp; año de desaparición entre 2019 y 2026.`,
+      pasos:[
+        `Filtra <b>ESTATUS = "PERSONA DESAPARECIDA"</b> y <b>SEXO = "${sexo}"</b>.`,
+        'Extrae el año de <b>FECHA DESAPARICION</b> y quédate con 2019 a 2026.',
+        'La columna <b>RANGO DE EDAD</b> viene en tramos quinquenales (0-4, 5-9, 10-14, 15-19, 20-24…). Debes reagruparlos en los seis tramos de la gráfica con una columna auxiliar.',
+        'Reagrupación: <b>0-14</b> = 0-4 + 5-9 + 10-14 · <b>15-19</b> = tal cual · <b>20-29</b> = 20-24 + 25-29 · <b>30-39</b> = 30-34 + 35-39 · <b>40-49</b> = 40-44 + 45-49 · <b>50+</b> = todos los tramos de 50 en adelante.',
+        'Cuenta por año y por tramo reagrupado.'
+      ],
+      formula:`=SI(O(D2="0-4",D2="5-9",D2="10-14"),"0-14",\n SI(D2="15-19","15-19",\n SI(O(D2="20-24",D2="25-29"),"20-29",\n SI(O(D2="30-34",D2="35-39"),"30-39",\n SI(O(D2="40-44",D2="45-49"),"40-49","50+")))))\n\n=CONTAR.SI.CONJUNTO(Estatus,"PERSONA DESAPARECIDA",Sexo,"${sexo}",\n                      AnioDesap,2026, GrupoEdad,"20-29")`,
+      check:`La suma de los seis tramos en todos los años, más las ${fmt(pre.length)} personas de la nota al pie, debe dar el total de ${sexo === 'MUJER' ? 'mujeres' : 'hombres'} con estatus de persona desaparecida.`,
+      flag:'Los registros cuyo <b>RANGO DE EDAD</b> es <code>SE IGNORA</code> quedan contabilizados dentro del tramo <b>50+</b>. Así lo hace el sitio oficial: verificado porque es la única agrupación que reproduce exactamente sus cifras al pie. Si los separas en una categoría propia, tus totales no coincidirán con los publicados.'
+    });
+  });
+
+  /* ---------- Condición × clasificación ---------- */
+  const CLAS = ['SIN SER VICTIMA DE DELITO','VICTIMA DE DELITO DIVERSO','VICTIMA DE DELITO CONTEMPLADO EN LA LEY GENERAL'];
+  const CLAS_LBL = ['No víctimas de delito','Víctimas de delito diverso','Víctimas de delito contemplado en Ley General'];
+  const CLAS_COL = [C.tealLight, C.gold, C.salmon];
+  function condChart(canvas, filtro){
+    const set = LOC.filter(filtro);
+    mkChart(canvas,{
+      type:'bar',
+      data:{ labels:['Con vida','Sin vida'],
+        datasets: CLAS.map((c,i) => ({
+          label: CLAS_LBL[i], backgroundColor: CLAS_COL[i], borderRadius:4, maxBarThickness:46,
+          data: ['CON VIDA','SIN VIDA'].map(cd => set.filter(r => r.condLoc === cd && r.clasLoc === c).length)
+        })) },
+      options: barOpts(true,true,false)
+    });
+    return set.length;
+  }
+  const nAll = condChart('c-cond-todas', () => true);
+  const nMuj = condChart('c-cond-m', r => r.sexo === 'MUJER');
+  const nHom = condChart('c-cond-h', r => r.sexo === 'HOMBRE');
+
+  [['a-cond','todas las personas localizadas',null,nAll],
+   ['a-cond-m','las mujeres localizadas','MUJER',nMuj],
+   ['a-cond-h','los hombres localizados','HOMBRE',nHom]].forEach(([id,desc,sexo,total]) => {
+    auditPanel(id,{
+      cols:['ESTATUS','FECHA DE LOCALIZACION','CONDICION LOCALIZACION','CLASIFICACION LOCALIZACION'].concat(sexo ? ['SEXO'] : []),
+      filtro:`<code>ESTATUS = "PERSONA LOCALIZADA"</code> &nbsp;Y&nbsp; localización desde diciembre de 2018${sexo ? ` &nbsp;Y&nbsp; <code>SEXO = "${sexo}"</code>` : ''}.`,
+      pasos:[
+        'Filtra <b>ESTATUS = "PERSONA LOCALIZADA"</b>.',
+        'Con las columnas auxiliares de año y mes de <b>FECHA DE LOCALIZACION</b>, conserva año &gt; 2018 o bien año = 2018 con mes = 12.',
+        sexo ? `Filtra <b>SEXO = "${sexo}"</b>.` : 'No apliques filtro de sexo: esta gráfica es del total.',
+        'Cruza <b>CONDICION LOCALIZACION</b> (dos categorías: CON VIDA / SIN VIDA) contra <b>CLASIFICACION LOCALIZACION</b> (tres categorías).',
+        'Resultan seis combinaciones posibles, que son los seis segmentos de las dos barras apiladas.'
+      ],
+      formula:`=CONTAR.SI.CONJUNTO(Estatus,"PERSONA LOCALIZADA",\n                      Condicion,"CON VIDA",\n                      Clasificacion,"SIN SER VICTIMA DE DELITO",${sexo ? `\n                      Sexo,"${sexo}",` : ''}\n                      AnioLoc,"&gt;2018")`,
+      check:`Los seis segmentos deben sumar <b>${fmt(total)}</b>.`
+    });
+  });
+
+  /* ---------- Porcentaje de localización ---------- */
+  function pctSerie(anual){
+    return YEARS.map(y => {
+      const den = ROWS.filter(r => !esCierre(r) && (anual ? incidenciaAnual(r,y) : incidenciaEneJul(r,y)));
+      const num = den.filter(r => r.fLoc && r.fLoc.y === y && (anual ? true : r.fLoc.m <= CUT_MONTH)).length;
+      return den.length ? +(num / den.length * 100).toFixed(2) : 0;
+    });
+  }
+  const serieAnual  = pctSerie(true);
+  const serieEneJul = pctSerie(false);
+
+  function pctChart(canvas, serie){
+    mkChart(canvas,{
+      type:'bar',
+      data:{ labels:YEARS, datasets:[{ label:'Porcentaje de localización', data:serie,
+        backgroundColor: YEARS.map((y,i) => i === YEARS.length - 1 ? C.blue : C.teal), borderRadius:4, maxBarThickness:34 }] },
+      options: barOpts(false,true,true)
+    });
+  }
+  pctChart('c-pct-anual', serieAnual);
+  pctChart('c-pct-enejul', serieEneJul);
+
+  auditPanel('a-pct-anual',{
+    cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','FECHA DE LOCALIZACION'],
+    filtro:'Año de desaparición = año de reporte = año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>. El numerador exige además que la localización haya ocurrido en ese mismo año.',
+    pasos:[
+      '<b>Denominador.</b> Cuenta las filas donde el <b>año de FECHA DESAPARICION</b> y el <b>año de FECHA REPORTE</b> son ambos el año que estás calculando. Es la cohorte de personas que desaparecieron y fueron reportadas dentro de ese año calendario.',
+      'Excluye del denominador las filas con <b>ESTATUS = "CIERRE"</b>.',
+      '<b>Numerador.</b> De esa misma cohorte, cuenta cuántas tienen <b>año de FECHA DE LOCALIZACION</b> igual a ese año. Es decir: fueron localizadas dentro del mismo año en que desaparecieron.',
+      'Divide numerador entre denominador y multiplica por 100.',
+      'Importante: el numerador <b>no</b> es simplemente «ESTATUS = PERSONA LOCALIZADA». Una persona desaparecida en 2019 y localizada en 2024 cuenta en el denominador de 2019 pero <b>no</b> en su numerador.'
+    ],
+    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025,\n                      Estatus,"&lt;&gt;CIERRE", AnioLoc,2025)\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2025, AnioRep,2025,\n                      Estatus,"&lt;&gt;CIERRE")\n\n\' Porcentaje\n= Numerador / Denominador * 100',
+    flag:'El año en curso siempre aparece más bajo de lo que terminará siendo: sólo ha transcurrido una parte del año para que ocurran localizaciones. Por eso la comparación válida entre años es la gráfica siguiente, con ventana fija enero–agosto.'
+  });
+
+  auditPanel('a-pct-enejul',{
+    cols:['ESTATUS','FECHA DESAPARICION','FECHA REPORTE','FECHA DE LOCALIZACION'],
+    filtro:'Desaparición y reporte dentro de enero–agosto del año analizado &nbsp;Y&nbsp; <code>ESTATUS ≠ "CIERRE"</code>. El numerador exige además localización dentro de esa misma ventana enero–agosto.',
+    pasos:[
+      '<b>Denominador.</b> Filtra: mes de desaparición ≤ 8, año de desaparición = año analizado, mes de reporte ≤ 8, año de reporte = año analizado, y <b>ESTATUS ≠ "CIERRE"</b>. Cuenta las filas.',
+      '<b>Numerador.</b> Sobre esas mismas filas, cuenta cuántas tienen <b>mes de FECHA DE LOCALIZACION ≤ 8</b> y <b>año de localización = año analizado</b>.',
+      'Divide numerador entre denominador y multiplica por 100.',
+      'Esta es la ventana que hace comparables los años entre sí: siempre son ocho meses de exposición al riesgo y ocho meses de oportunidad de localización.'
+    ],
+    formula:'\' Numerador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE",\n                      AnioLoc,2026,   MesLoc,"&lt;=8")\n\n\' Denominador\n=CONTAR.SI.CONJUNTO(AnioDesap,2026, MesDesap,"&lt;=8",\n                      AnioRep,2026,   MesRep,"&lt;=8",\n                      Estatus,"&lt;&gt;CIERRE")\n\n\' Porcentaje\n= Numerador / Denominador * 100',
+    check:`Para 2026 esta fórmula debe dar <b>${serieEneJul[7].toFixed(1)}%</b>, que es exactamente la cifra difundida en los boletines oficiales del Gobierno de Jalisco.`,
+    flag:'Para 2019–2025 el resultado de esta fórmula difiere de lo publicado por el sitio oficial entre 0.3 y 0.9 puntos porcentuales. La diferencia proviene del tratamiento exacto de los registros «CIERRE» dentro del denominador, que no puede determinarse con certeza a partir de una serie publicada con un solo decimal. Se documenta la divergencia en lugar de ajustar la cifra.'
+  });
+
+  /* ---------- Municipios ---------- */
+  const muniMap = {};
+  ROWS.forEach(r => {
+    const m = r.munDes || 'SE IGNORA';
+    if (!muniMap[m]) muniMap[m] = { des:0, loc:0, tot:0 };
+    muniMap[m].tot++;
+    if (esDesaparecida(r)) muniMap[m].des++;
+    if (esLocalizada(r))   muniMap[m].loc++;
+  });
+  const muniArr = Object.entries(muniMap).map(([k,v]) => ({ muni:k, ...v })).sort((a,b) => b.des - a.des);
+  const top15 = muniArr.slice(0,15);
+
+  mkChart('c-muni',{
+    type:'bar',
+    data:{ labels: top15.map(m => m.muni.charAt(0) + m.muni.slice(1).toLowerCase()),
+      datasets:[{ label:'Personas desaparecidas', data: top15.map(m => m.des),
+        backgroundColor:C.blue, borderRadius:4 }] },
+    options: barOpts(false,true,false)
+  });
+  auditPanel('a-muni',{
+    cols:['ESTATUS','MUNICIPIO DESAPARICION'],
+    filtro:'<code>ESTATUS = "PERSONA DESAPARECIDA"</code>, agrupando por <code>MUNICIPIO DESAPARICION</code>.',
+    pasos:[
+      'Filtra <b>ESTATUS = "PERSONA DESAPARECIDA"</b>.',
+      'Inserta una tabla dinámica con <b>MUNICIPIO DESAPARICION</b> en filas y el conteo de folios en valores.',
+      'Ordena de mayor a menor y conserva los 15 primeros municipios.',
+      'Los registros cuyo municipio es <code>SE IGNORA</code> se conservan como categoría propia: no se eliminan ni se redistribuyen.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(Estatus,"PERSONA DESAPARECIDA",\n                      MunicipioDesap,"ZAPOPAN")',
+    flag:'El municipio corresponde al <b>lugar de la desaparición</b>, no al lugar de residencia de la persona ni al de su localización. Para esto último existe la columna <code>MUNICIPIO LOCALIZACION</code>, que responde a una pregunta distinta.'
+  });
+
+  document.getElementById('tbl-muni').innerHTML = muniArr.map(m => {
+    const base = m.des + m.loc;
+    const pct = base ? (m.loc / base * 100) : 0;
+    return `<tr><td>${m.muni.charAt(0) + m.muni.slice(1).toLowerCase()}</td>
+      <td class="num">${fmt(m.des)}</td><td class="num">${fmt(m.loc)}</td>
+      <td class="num">${fmt(m.tot)}</td><td class="num">${pct.toFixed(1)}%</td></tr>`;
+  }).join('');
+  auditPanel('a-tbl-muni',{
+    cols:['ESTATUS','MUNICIPIO DESAPARICION'],
+    filtro:'Sin filtro previo: se recorre el total de registros agrupando por <code>MUNICIPIO DESAPARICION</code>.',
+    pasos:[
+      'Tabla dinámica: <b>MUNICIPIO DESAPARICION</b> en filas y <b>ESTATUS</b> en columnas.',
+      'La columna «Total registros» incluye los tres estatus, también los de <code>CIERRE</code>. Por eso puede ser mayor que la suma de desaparecidas + localizadas.',
+      'El «% localización» de esta tabla se calcula como localizadas ÷ (desaparecidas + localizadas) × 100, excluyendo los registros de cierre.',
+      'Este porcentaje <b>no</b> es comparable con el de las gráficas de porcentaje de localización: aquel usa cohortes por año y ventana temporal; éste es un acumulado histórico por municipio.'
+    ],
+    formula:'=CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA LOCALIZADA")\n/ (CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA LOCALIZADA")\n +  CONTAR.SI.CONJUNTO(MunicipioDesap,"GUADALAJARA",Estatus,"PERSONA DESAPARECIDA")) * 100',
+    flag:'Los municipios pequeños tienen bases muy reducidas: un porcentaje alto o bajo puede deberse a unos pocos casos. Revisa siempre el número absoluto junto al porcentaje antes de sacar conclusiones.'
+  });
+
+  /* ---------- Cobertura ---------- */
+  const cierreTipos = {};
+  CIE.forEach(r => { const t = r.tipoCierre || 'SIN ESPECIFICAR'; cierreTipos[t] = (cierreTipos[t] || 0) + 1; });
+  document.getElementById('cobertura').innerHTML = `
+    <h4 style="font-size:.8rem;color:var(--cges-blue);margin-bottom:9px;font-family:'Montserrat'">Cobertura y conciliación de la base</h4>
+    <div style="font-size:.83rem;color:var(--grey-700);line-height:1.85">
+      Registros totales en el Sheet: <b>${fmt(ROWS.length)}</b> &nbsp;=&nbsp;
+      <b>${fmt(DES.length)}</b> con estatus de persona desaparecida &nbsp;+&nbsp;
+      <b>${fmt(ROWS.filter(esLocalizada).length)}</b> con estatus de persona localizada &nbsp;+&nbsp;
+      <b>${fmt(CIE.length)}</b> con estatus de cierre.<br>
+      Desglose de los cierres: ${Object.entries(cierreTipos).sort((a,b) => b[1]-a[1])
+        .map(([k,v]) => `${k.charAt(0)+k.slice(1).toLowerCase()} (<b>${fmt(v)}</b>)`).join(' · ')}.<br>
+      De las ${fmt(ROWS.filter(esLocalizada).length)} personas localizadas, <b>${fmt(LOC.length)}</b> lo fueron a partir del
+      1 de diciembre de 2018; las restantes <b>${fmt(ROWS.filter(esLocalizada).length - LOC.length)}</b> corresponden a
+      localizaciones anteriores a esa fecha y quedan fuera de las gráficas de la sección de personas localizadas.
+    </div>`;
+}
+
+function kpi(lbl, val, sub, alt){
+  return `<div class="kpi${alt ? ' alt' : ''}"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="sub">${sub}</div></div>`;
+}
+function pctTxt(a, b){ return b ? (a / b * 100).toFixed(1) + '%' : '—'; }
+
+load();
+</script>
+</body>
+</html>
